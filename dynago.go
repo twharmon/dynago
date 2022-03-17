@@ -1,6 +1,8 @@
 package dynago
 
 import (
+	"reflect"
+
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 )
 
@@ -28,6 +30,9 @@ type Config struct {
 	// LayoutTagName specifies which tag is used for formatting time
 	// values.
 	LayoutTagName string
+
+	// AdditionalAttributes can be added for each dynamodb item.
+	AdditionalAttributes func(reflect.Value) map[string]*dynamodb.AttributeValue
 }
 
 func New(config ...*Config) *Dynago {
@@ -38,6 +43,9 @@ func New(config ...*Config) *Dynago {
 			TypeTagName:      "type",
 			PrecTagName:      "prec",
 			LayoutTagName:    "layout",
+			AdditionalAttributes: func(v reflect.Value) map[string]*dynamodb.AttributeValue {
+				return nil
+			},
 		}}
 	}
 	return &Dynago{config: config[0]}
@@ -60,6 +68,11 @@ func (d *Dynago) Item(v interface{}) map[string]*dynamodb.AttributeValue {
 	for i := 0; i < ty.NumField(); i++ {
 		cfg := d.fieldConfig(ty.Field(i))
 		m[cfg.attrName] = cfg.attrVal(val.Field(i))
+	}
+	if add := d.config.AdditionalAttributes(val); add != nil {
+		for k, v := range add {
+			m[k] = v
+		}
 	}
 	return m
 }

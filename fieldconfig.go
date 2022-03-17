@@ -129,16 +129,14 @@ func (c *fieldConfig) unmarshal(item map[string]*dynamodb.AttributeValue, v refl
 	switch c.attrType {
 	case "S":
 		if item[c.attrName] != nil && item[c.attrName].S != nil {
+			str := *item[c.attrName].S
+			fmt.Sscanf(str, c.fmt, &str)
 			switch ty.Kind() {
 			case reflect.String:
-				var str string
-				fmt.Sscanf(*item[c.attrName].S, c.fmt, &str)
 				v.Set(reflect.ValueOf(str))
 			case reflect.Struct:
 				switch ty {
 				case timeType:
-					var str string
-					fmt.Sscanf(*item[c.attrName].S, c.fmt, &str)
 					t, err := time.Parse(c.layout, str)
 					if err != nil {
 						err = fmt.Errorf("attribute: %s, time.Parse: %w", c.attrName, err)

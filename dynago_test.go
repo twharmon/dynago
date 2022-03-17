@@ -314,7 +314,7 @@ func TestItemTimeNoLayoutTag(t *testing.T) {
 	assertEq(t, want, got)
 }
 
-func TestUnmarshalTime(t *testing.T) {
+func TestUnmarshalTimeNoLayoutTag(t *testing.T) {
 	type Person struct {
 		Born time.Time
 	}
@@ -330,6 +330,65 @@ func TestUnmarshalTime(t *testing.T) {
 		t.Fatalf("unexpected err: %s", err)
 	}
 	assertEq(t, want.Born.Unix(), got.Born.Unix())
+}
+
+func TestItemTimeWithLayoutTag(t *testing.T) {
+	type Person struct {
+		Born time.Time `layout:"15:04:05 2006-01-02"`
+	}
+	p := Person{
+		Born: time.Now(),
+	}
+	want := map[string]*dynamodb.AttributeValue{
+		"Born": {S: aws.String(p.Born.Format("15:04:05 2006-01-02"))},
+	}
+	client := dynago.New()
+	got := client.Item(&p)
+	assertEq(t, want, got)
+}
+
+// func TestUnmarshalTimeWithLayoutTag(t *testing.T) {
+// 	type Person struct {
+// 		Born time.Time `layout:"15:04:05 2006-01-02"`
+// 	}
+// 	want := Person{
+// 		Born: time.Now(),
+// 	}
+// 	item := map[string]*dynamodb.AttributeValue{
+// 		"Born": {S: aws.String(want.Born.Format("15:04:05 2006-01-02"))},
+// 	}
+// 	client := dynago.New()
+// 	var got Person
+// 	if err := client.Unmarshal(item, &got); err != nil {
+// 		t.Fatalf("unexpected err: %s", err)
+// 	}
+// 	assertEq(t, want.Born.Unix(), got.Born.Unix())
+// }
+
+func TestItemWithAdditionalAttributes(t *testing.T) {
+	type Person struct {
+		Name string
+	}
+	client := dynago.New(&dynago.Config{
+		AdditionalAttributes: func(v reflect.Value) map[string]*dynamodb.AttributeValue {
+			switch v.Interface().(type) {
+			case Person:
+				return map[string]*dynamodb.AttributeValue{
+					"Type": {S: aws.String("Person")},
+				}
+			}
+			return nil
+		},
+	})
+	p := Person{
+		Name: "foo",
+	}
+	want := map[string]*dynamodb.AttributeValue{
+		"Name": {S: &p.Name},
+		"Type": {S: aws.String("Person")},
+	}
+	got := client.Item(&p)
+	assertEq(t, want, got)
 }
 
 func BenchmarkItem(b *testing.B) {

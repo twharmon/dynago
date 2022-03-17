@@ -34,12 +34,12 @@ func main() {
 	}
 	item := ddb.Item(&p)
 	fmt.Println(item)
-    // item ready for DynamoDB PutItem:
-    // {
+	// item ready for DynamoDB PutItem:
+	// {
 	// 	"PK": {"S": "Post#abc123"},
-    //     "Title": {"S": "Hi"},
-    //     "Body": {"S": "Hello world!"},
-    //     "Category": {"S": "announcement"},
+	//     "Title": {"S": "Hi"},
+	//     "Body": {"S": "Hello world!"},
+	//     "Category": {"S": "announcement"},
 	// }
 }
 ```

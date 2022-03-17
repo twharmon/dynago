@@ -12,14 +12,15 @@ import (
 )
 
 var timeType = reflect.TypeOf(time.Time{})
-var fmtRegExp = regexp.MustCompile(`\{([A-Z][a-zA-Z0-9_]*)\}`)
+var fmtRegExp = regexp.MustCompile(`\{([A-Z]?[a-zA-Z0-9_]*)\}`)
 
 type fieldConfig struct {
-	attrName string
-	attrType string
-	fmt      string
-	prec     int
-	layout   string
+	attrName   string
+	attrType   string
+	fmt        string
+	fmtRegExps map[string]*regexp.Regexp
+	prec       int
+	layout     string
 }
 
 func (d *Dynago) fieldConfig(sf reflect.StructField) *fieldConfig {
@@ -59,7 +60,12 @@ func (d *Dynago) fieldConfig(sf reflect.StructField) *fieldConfig {
 	if tag, ok := sf.Tag.Lookup(d.config.FmtTagName); ok {
 		fc.fmt = tag
 	} else {
-		fc.fmt = "{" + sf.Name + "}"
+		fc.fmt = "{}"
+	}
+	fc.fmtRegExps = make(map[string]*regexp.Regexp)
+	for _, match := range fmtRegExp.FindAllString(fc.fmt, -1) {
+		fname := strings.TrimPrefix(strings.TrimSuffix(match, "}"), "{")
+		fc.fmtRegExps[fname] = regexp.MustCompile("^" + fmtRegExp.ReplaceAllString(strings.ReplaceAll(fc.fmt, match, "(.*?)"), ".*?") + "$")
 	}
 	if tag, ok := sf.Tag.Lookup(d.config.PrecTagName); ok {
 		fc.prec, _ = strconv.Atoi(tag)
@@ -83,11 +89,16 @@ func (d *Dynago) fieldConfig(sf reflect.StructField) *fieldConfig {
 	return &fc
 }
 
-func (c *fieldConfig) format(v reflect.Value) *string {
+func (c *fieldConfig) format(v reflect.Value, fieldIndex int) *string {
 	output := c.fmt
 	for _, match := range fmtRegExp.FindAllString(c.fmt, -1) {
 		match = strings.TrimPrefix(strings.TrimSuffix(match, "}"), "{")
-		fval := v.FieldByName(match)
+		var fval reflect.Value
+		if match == "" {
+			fval = v.Field(fieldIndex)
+		} else {
+			fval = v.FieldByName(match)
+		}
 		for fval.Kind() == reflect.Ptr {
 			fval = fval.Elem()
 		}
@@ -104,13 +115,18 @@ func (c *fieldConfig) format(v reflect.Value) *string {
 func (c *fieldConfig) parse(s string, v reflect.Value, fieldIndex int) {
 	for _, match := range fmtRegExp.FindAllString(c.fmt, -1) {
 		fname := strings.TrimPrefix(strings.TrimSuffix(match, "}"), "{")
-		re := regexp.MustCompile("^" + strings.ReplaceAll(c.fmt, match, "(.*?)") + "$")
-		strSubs := re.FindStringSubmatch(s)
+		var fval reflect.Value
+		if fname == "" {
+			fval = v.Field(fieldIndex)
+		} else {
+			fval = v.FieldByName(fname)
+		}
+		// re := regexp.MustCompile("^" + fmtRegExp.ReplaceAllString(strings.ReplaceAll(c.fmt, match, "(.*?)"), ".*?") + "$")
+		strSubs := c.fmtRegExps[fname].FindStringSubmatch(s)
 		if strSubs == nil {
 			continue
 		}
 		str := strSubs[1]
-		fval := v.FieldByName(fname)
 		for fval.Kind() == reflect.Ptr {
 			fval = fval.Elem()
 		}
@@ -136,7 +152,7 @@ func (c *fieldConfig) attrVal(v reflect.Value, fieldIndex int) *dynamodb.Attribu
 	iface := fv.Interface()
 	switch c.attrType {
 	case "S":
-		return &dynamodb.AttributeValue{S: c.format(v)}
+		return &dynamodb.AttributeValue{S: c.format(v, fieldIndex)}
 	case "N":
 		switch val := iface.(type) {
 		case int64:

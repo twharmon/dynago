@@ -13,10 +13,10 @@ import (
 	"github.com/twharmon/dynago"
 )
 
-// BenchmarkItem-10               	  288585	      3740 ns/op	    2325 B/op	      45 allocs/op
-// BenchmarkItemByHand-10         	 1000000	      1147 ns/op	    1000 B/op	      15 allocs/op
-// BenchmarkUnmarshal-10          	  115850	      9978 ns/op	    8707 B/op	     136 allocs/op
-// BenchmarkUnmarshalByHand-10    	 3456111	       348.4 ns/op	       0 B/op	       0 allocs/op
+// BenchmarkItem-10               	  317056	      3504 ns/op	    2274 B/op	      40 allocs/op
+// BenchmarkItemByHand-10         	 1000000	      1144 ns/op	    1000 B/op	      15 allocs/op
+// BenchmarkUnmarshal-10          	  115984	     10089 ns/op	    8740 B/op	     137 allocs/op
+// BenchmarkUnmarshalByHand-10    	 3469292	       349.9 ns/op	       0 B/op	       0 allocs/op
 
 func assertEq(t *testing.T, want, got interface{}) {
 	if !reflect.DeepEqual(want, got) {
@@ -83,6 +83,56 @@ func TestItemStringFmt(t *testing.T) {
 	}
 	client := dynago.New()
 	got := client.Item(&p)
+	assertEq(t, want, got)
+}
+
+func TestItemStringFmtImplicit(t *testing.T) {
+	type Person struct {
+		Name string `fmt:"Person#{}"`
+	}
+	p := Person{
+		Name: "foo",
+	}
+	want := map[string]*dynamodb.AttributeValue{
+		"Name": {S: aws.String(fmt.Sprintf("Person#%s", p.Name))},
+	}
+	client := dynago.New()
+	got := client.Item(&p)
+	assertEq(t, want, got)
+}
+
+func TestItemStringCompoundFmt(t *testing.T) {
+	type Person struct {
+		Team string `attribute:"-"`
+		Name string `fmt:"Team#{Team}#Person#{}" attribute:"PK"`
+	}
+	p := Person{
+		Team: "foo",
+		Name: "bar",
+	}
+	want := map[string]*dynamodb.AttributeValue{
+		"PK": {S: aws.String(fmt.Sprintf("Team#%s#Person#%s", p.Team, p.Name))},
+	}
+	client := dynago.New()
+	got := client.Item(&p)
+	assertEq(t, want, got)
+}
+
+func TestUnmarshalStringCompoundFmt(t *testing.T) {
+	type Person struct {
+		Team string `attribute:"-"`
+		Name string `fmt:"Team#{Team}#Person#{}" attribute:"PK"`
+	}
+	want := Person{
+		Team: "foo",
+		Name: "bar",
+	}
+	item := map[string]*dynamodb.AttributeValue{
+		"PK": {S: aws.String(fmt.Sprintf("Team#%s#Person#%s", want.Team, want.Name))},
+	}
+	client := dynago.New()
+	var got Person
+	client.Unmarshal(item, &got)
 	assertEq(t, want, got)
 }
 

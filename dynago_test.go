@@ -13,10 +13,10 @@ import (
 	"github.com/twharmon/dynago"
 )
 
-// BenchmarkItem-10               	  438477	      2476 ns/op	    1793 B/op	      34 allocs/op
-// BenchmarkItemByHand-10         	 1000000	      1122 ns/op	    1000 B/op	      15 allocs/op
-// BenchmarkUnmarshal-10          	  450906	      2586 ns/op	     752 B/op	      22 allocs/op
-// BenchmarkUnmarshalByHand-10    	 3552892	       343.0 ns/op	       0 B/op	       0 allocs/op
+// BenchmarkItem-10               	  317056	      3504 ns/op	    2274 B/op	      40 allocs/op
+// BenchmarkItemByHand-10         	 1000000	      1144 ns/op	    1000 B/op	      15 allocs/op
+// BenchmarkUnmarshal-10          	  115984	     10089 ns/op	    8740 B/op	     137 allocs/op
+// BenchmarkUnmarshalByHand-10    	 3469292	       349.9 ns/op	       0 B/op	       0 allocs/op
 
 func assertEq(t *testing.T, want, got interface{}) {
 	if !reflect.DeepEqual(want, got) {
@@ -73,7 +73,7 @@ func TestItemAttribute(t *testing.T) {
 
 func TestItemStringFmt(t *testing.T) {
 	type Person struct {
-		Name string `fmt:"Person#%s"`
+		Name string `fmt:"Person#{Name}"`
 	}
 	p := Person{
 		Name: "foo",
@@ -83,6 +83,56 @@ func TestItemStringFmt(t *testing.T) {
 	}
 	client := dynago.New()
 	got := client.Item(&p)
+	assertEq(t, want, got)
+}
+
+func TestItemStringFmtImplicit(t *testing.T) {
+	type Person struct {
+		Name string `fmt:"Person#{}"`
+	}
+	p := Person{
+		Name: "foo",
+	}
+	want := map[string]*dynamodb.AttributeValue{
+		"Name": {S: aws.String(fmt.Sprintf("Person#%s", p.Name))},
+	}
+	client := dynago.New()
+	got := client.Item(&p)
+	assertEq(t, want, got)
+}
+
+func TestItemStringCompoundFmt(t *testing.T) {
+	type Person struct {
+		Team string `attribute:"-"`
+		Name string `fmt:"Team#{Team}#Person#{}" attribute:"PK"`
+	}
+	p := Person{
+		Team: "foo",
+		Name: "bar",
+	}
+	want := map[string]*dynamodb.AttributeValue{
+		"PK": {S: aws.String(fmt.Sprintf("Team#%s#Person#%s", p.Team, p.Name))},
+	}
+	client := dynago.New()
+	got := client.Item(&p)
+	assertEq(t, want, got)
+}
+
+func TestUnmarshalStringCompoundFmt(t *testing.T) {
+	type Person struct {
+		Team string `attribute:"-"`
+		Name string `fmt:"Team#{Team}#Person#{}" attribute:"PK"`
+	}
+	want := Person{
+		Team: "foo",
+		Name: "bar",
+	}
+	item := map[string]*dynamodb.AttributeValue{
+		"PK": {S: aws.String(fmt.Sprintf("Team#%s#Person#%s", want.Team, want.Name))},
+	}
+	client := dynago.New()
+	var got Person
+	client.Unmarshal(item, &got)
 	assertEq(t, want, got)
 }
 
@@ -120,7 +170,7 @@ func TestUnmarshalAttribute(t *testing.T) {
 
 func TestUnmarshalStringFmt(t *testing.T) {
 	type Person struct {
-		Name string `fmt:"Person#%s"`
+		Name string `fmt:"Person#{Name}"`
 	}
 	want := Person{
 		Name: "bar",
@@ -334,36 +384,36 @@ func TestUnmarshalTimeNoLayoutTag(t *testing.T) {
 
 func TestItemTimeWithLayoutTag(t *testing.T) {
 	type Person struct {
-		Born time.Time `layout:"15:04:05 2006-01-02"`
+		Born time.Time `layout:"15:04:05 Z07:00 2006-01-02"`
 	}
 	p := Person{
 		Born: time.Now(),
 	}
 	want := map[string]*dynamodb.AttributeValue{
-		"Born": {S: aws.String(p.Born.Format("15:04:05 2006-01-02"))},
+		"Born": {S: aws.String(p.Born.Format("15:04:05 Z07:00 2006-01-02"))},
 	}
 	client := dynago.New()
 	got := client.Item(&p)
 	assertEq(t, want, got)
 }
 
-// func TestUnmarshalTimeWithLayoutTag(t *testing.T) {
-// 	type Person struct {
-// 		Born time.Time `layout:"15:04:05 2006-01-02"`
-// 	}
-// 	want := Person{
-// 		Born: time.Now(),
-// 	}
-// 	item := map[string]*dynamodb.AttributeValue{
-// 		"Born": {S: aws.String(want.Born.Format("15:04:05 2006-01-02"))},
-// 	}
-// 	client := dynago.New()
-// 	var got Person
-// 	if err := client.Unmarshal(item, &got); err != nil {
-// 		t.Fatalf("unexpected err: %s", err)
-// 	}
-// 	assertEq(t, want.Born.Unix(), got.Born.Unix())
-// }
+func TestUnmarshalTimeWithLayoutTag(t *testing.T) {
+	type Person struct {
+		Born time.Time `layout:"15:04:05 Z07:00 2006-01-02"`
+	}
+	want := Person{
+		Born: time.Now(),
+	}
+	item := map[string]*dynamodb.AttributeValue{
+		"Born": {S: aws.String(want.Born.Format("15:04:05 Z07:00 2006-01-02"))},
+	}
+	client := dynago.New()
+	var got Person
+	if err := client.Unmarshal(item, &got); err != nil {
+		t.Fatalf("unexpected err: %s", err)
+	}
+	assertEq(t, want.Born.Unix(), got.Born.Unix())
+}
 
 func TestItemWithAdditionalAttributes(t *testing.T) {
 	type Person struct {
@@ -393,7 +443,7 @@ func TestItemWithAdditionalAttributes(t *testing.T) {
 
 func BenchmarkItem(b *testing.B) {
 	type Person struct {
-		Name       string  `attribute:"name" fmt:"Person#%s"`
+		Name       string  `attribute:"name" fmt:"Person#{Name}"`
 		Age        int64   `attribute:"age"`
 		Percentage float64 `attribute:"percentage"`
 		Alive      bool    `attribute:"alive"`
@@ -415,7 +465,7 @@ func BenchmarkItem(b *testing.B) {
 
 func BenchmarkItemByHand(b *testing.B) {
 	type Person struct {
-		Name       string `attribute:"name" fmt:"Person#%s"`
+		Name       string `attribute:"name" fmt:"Person#{Name}"`
 		Age        int64
 		Percentage float64
 		Alive      bool
@@ -442,7 +492,7 @@ func BenchmarkItemByHand(b *testing.B) {
 
 func BenchmarkUnmarshal(b *testing.B) {
 	type Person struct {
-		Name       string `attribute:"name" fmt:"Person#%s"`
+		Name       string `attribute:"name" fmt:"Person#{Name}"`
 		Age        int64
 		Percentage float64
 		Alive      bool

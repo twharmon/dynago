@@ -55,7 +55,10 @@ func (d *Dynago) Unmarshal(item map[string]*dynamodb.AttributeValue, v interface
 	ty, val := tyVal(v)
 	for i := 0; i < ty.NumField(); i++ {
 		cfg := d.fieldConfig(ty.Field(i))
-		if err := cfg.unmarshal(item, val.Field(i)); err != nil {
+		if cfg.attrName == "-" {
+			continue
+		}
+		if err := cfg.unmarshal(item, val, i); err != nil {
 			return err
 		}
 	}
@@ -67,7 +70,10 @@ func (d *Dynago) Item(v interface{}) map[string]*dynamodb.AttributeValue {
 	ty, val := tyVal(v)
 	for i := 0; i < ty.NumField(); i++ {
 		cfg := d.fieldConfig(ty.Field(i))
-		m[cfg.attrName] = cfg.attrVal(val.Field(i))
+		if cfg.attrName == "-" {
+			continue
+		}
+		m[cfg.attrName] = cfg.attrVal(val, i)
 	}
 	if add := d.config.AdditionalAttributes(val); add != nil {
 		for k, v := range add {

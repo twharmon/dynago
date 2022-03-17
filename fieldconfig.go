@@ -3,15 +3,16 @@ package dynago
 import (
 	"fmt"
 	"reflect"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 )
 
 var timeType = reflect.TypeOf(time.Time{})
+var fmtRegExp = regexp.MustCompile(`\{([A-Z][a-zA-Z0-9_]*)\}`)
 
 type fieldConfig struct {
 	attrName string
@@ -58,15 +59,7 @@ func (d *Dynago) fieldConfig(sf reflect.StructField) *fieldConfig {
 	if tag, ok := sf.Tag.Lookup(d.config.FmtTagName); ok {
 		fc.fmt = tag
 	} else {
-		switch kind {
-		case reflect.String:
-			fc.fmt = "%s"
-		case reflect.Struct:
-			switch ty {
-			case timeType:
-				fc.fmt = "%s"
-			}
-		}
+		fc.fmt = "{" + sf.Name + "}"
 	}
 	if tag, ok := sf.Tag.Lookup(d.config.PrecTagName); ok {
 		fc.prec, _ = strconv.Atoi(tag)
@@ -90,18 +83,60 @@ func (d *Dynago) fieldConfig(sf reflect.StructField) *fieldConfig {
 	return &fc
 }
 
-func (c *fieldConfig) attrVal(v reflect.Value) *dynamodb.AttributeValue {
-	for v.Kind() == reflect.Ptr {
-		v = v.Elem()
+func (c *fieldConfig) format(v reflect.Value) *string {
+	output := c.fmt
+	for _, match := range fmtRegExp.FindAllString(c.fmt, -1) {
+		match = strings.TrimPrefix(strings.TrimSuffix(match, "}"), "{")
+		fval := v.FieldByName(match)
+		for fval.Kind() == reflect.Ptr {
+			fval = fval.Elem()
+		}
+		switch val := fval.Interface().(type) {
+		case string:
+			output = strings.ReplaceAll(output, "{"+match+"}", val)
+		case time.Time:
+			output = strings.ReplaceAll(output, "{"+match+"}", val.Format(c.layout))
+		}
 	}
-	iface := v.Interface()
+	return &output
+}
+
+func (c *fieldConfig) parse(s string, v reflect.Value, fieldIndex int) {
+	for _, match := range fmtRegExp.FindAllString(c.fmt, -1) {
+		fname := strings.TrimPrefix(strings.TrimSuffix(match, "}"), "{")
+		re := regexp.MustCompile("^" + strings.ReplaceAll(c.fmt, match, "(.*?)") + "$")
+		strSubs := re.FindStringSubmatch(s)
+		if strSubs == nil {
+			continue
+		}
+		str := strSubs[1]
+		fval := v.FieldByName(fname)
+		for fval.Kind() == reflect.Ptr {
+			fval = fval.Elem()
+		}
+		fty := fval.Type()
+		switch fty.Kind() {
+		case reflect.String:
+			fval.Set(reflect.ValueOf(str))
+		case reflect.Struct:
+			switch fty {
+			case timeType:
+				t, _ := time.Parse(c.layout, str)
+				fval.Set(reflect.ValueOf(t))
+			}
+		}
+	}
+}
+
+func (c *fieldConfig) attrVal(v reflect.Value, fieldIndex int) *dynamodb.AttributeValue {
+	fv := v.Field(fieldIndex)
+	for fv.Kind() == reflect.Ptr {
+		fv = fv.Elem()
+	}
+	iface := fv.Interface()
 	switch c.attrType {
 	case "S":
-		switch val := iface.(type) {
-		case time.Time:
-			iface = val.Format(c.layout)
-		}
-		return &dynamodb.AttributeValue{S: aws.String(fmt.Sprintf(c.fmt, iface))}
+		return &dynamodb.AttributeValue{S: c.format(v)}
 	case "N":
 		switch val := iface.(type) {
 		case int64:
@@ -121,30 +156,16 @@ func (c *fieldConfig) attrVal(v reflect.Value) *dynamodb.AttributeValue {
 	panic("invalid attrTy")
 }
 
-func (c *fieldConfig) unmarshal(item map[string]*dynamodb.AttributeValue, v reflect.Value) error {
-	for v.Kind() == reflect.Ptr {
-		v = v.Elem()
+func (c *fieldConfig) unmarshal(item map[string]*dynamodb.AttributeValue, v reflect.Value, fieldIndex int) error {
+	fv := v.Field(fieldIndex)
+	for fv.Kind() == reflect.Ptr {
+		fv = fv.Elem()
 	}
-	ty := v.Type()
+	ty := fv.Type()
 	switch c.attrType {
 	case "S":
 		if item[c.attrName] != nil && item[c.attrName].S != nil {
-			str := *item[c.attrName].S
-			fmt.Sscanf(str, c.fmt, &str)
-			switch ty.Kind() {
-			case reflect.String:
-				v.Set(reflect.ValueOf(str))
-			case reflect.Struct:
-				switch ty {
-				case timeType:
-					t, err := time.Parse(c.layout, str)
-					if err != nil {
-						err = fmt.Errorf("attribute: %s, time.Parse: %w", c.attrName, err)
-						return err
-					}
-					v.Set(reflect.ValueOf(t))
-				}
-			}
+			c.parse(*item[c.attrName].S, v, fieldIndex)
 		}
 	case "N":
 		if item[c.attrName] != nil && item[c.attrName].N != nil {
@@ -155,23 +176,23 @@ func (c *fieldConfig) unmarshal(item map[string]*dynamodb.AttributeValue, v refl
 					err = fmt.Errorf("attribute: %s, strconv.ParseInt: %w", c.attrName, err)
 					return err
 				}
-				v.Set(reflect.ValueOf(i))
+				fv.Set(reflect.ValueOf(i))
 			case reflect.Float64:
 				i, err := strconv.ParseFloat(*item[c.attrName].N, 64)
 				if err != nil {
 					err = fmt.Errorf("attribute: %s, strconv.ParseFloat: %w", c.attrName, err)
 					return err
 				}
-				v.Set(reflect.ValueOf(i))
+				fv.Set(reflect.ValueOf(i))
 			}
 		}
 	case "B":
 		if item[c.attrName] != nil && item[c.attrName].B != nil {
-			v.Set(reflect.ValueOf(item[c.attrName].B))
+			fv.Set(reflect.ValueOf(item[c.attrName].B))
 		}
 	case "BOOL":
 		if item[c.attrName] != nil && item[c.attrName].BOOL != nil {
-			v.Set(reflect.ValueOf(*item[c.attrName].BOOL))
+			fv.Set(reflect.ValueOf(*item[c.attrName].BOOL))
 		}
 	}
 	return nil

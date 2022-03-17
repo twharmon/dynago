@@ -18,7 +18,7 @@ import (
 )
 
 type Post struct {
-	ID string `attribute:"PK" fmt:"Post#%s"`
+	ID string `attribute:"PK" fmt:"Post#{ID}"`
 	Title string
 	Body string
 	Category string

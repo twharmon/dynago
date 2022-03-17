@@ -25,7 +25,7 @@ type Post struct {
 }
 
 func main() {
-    ddb := dynago.New()
+	ddb := dynago.New()
 	p := Post{
 		ID:       "abc123",
 		Title:    "Hi",

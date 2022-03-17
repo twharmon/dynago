@@ -12,8 +12,12 @@ import (
 	"github.com/twharmon/dynago"
 )
 
-// BenchmarkItemNoTags-10          	  884364	        1347 ns/op	    1352 B/op	      26 allocs/op
-// BenchmarkItemNoTagsByHand-10    	 1694782	       707.0 ns/op	     744 B/op	       9 allocs/op
+// BenchmarkItemNoTags-10               	  865939	      1372 ns/op	    1352 B/op	      26 allocs/op
+// BenchmarkItemNoTagsByHand-10         	 1664457	       720.4 ns/op	     744 B/op	       9 allocs/op
+// BenchmarkItemTags-10                 	  627104	      1897 ns/op	    1361 B/op	      26 allocs/op
+// BenchmarkItemTagsByHand-10           	 1414177	       849.8 ns/op	     792 B/op	      12 allocs/op
+// BenchmarkUnmarshalNoTags-10          	 1000000	      1002 ns/op	     448 B/op	      15 allocs/op
+// BenchmarkUnmarshalNoTagsByHand-10    	 8324685	       157.8 ns/op	       0 B/op	       0 allocs/op
 
 func assertEq(t *testing.T, want, got interface{}) {
 	if !reflect.DeepEqual(want, got) {

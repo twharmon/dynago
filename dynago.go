@@ -1,6 +1,8 @@
 package dynago
 
 import (
+	"reflect"
+
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 )
 
@@ -8,11 +10,29 @@ type Dynago struct {
 	config *Config
 }
 
+// Config is used to customize struct tag names.
 type Config struct {
+	// AttributeTagName specifies which tag is used for a DynamoDB
+	// item attribute name.
 	AttributeTagName string
-	FmtTagName       string
-	TypeTagName      string
-	PrecTagName      string
+
+	// FmtTagName specifies which tag is used to format the attribute
+	// value. This is only used for String types.
+	FmtTagName string
+
+	// TypeTagName specifies which tag is used for DynamoDB type.
+	TypeTagName string
+
+	// PrecTagName specifies which tag is used for floating point.
+	// number precision
+	PrecTagName string
+
+	// LayoutTagName specifies which tag is used for formatting time
+	// values.
+	LayoutTagName string
+
+	// AdditionalAttributes can be added for each dynamodb item.
+	AdditionalAttributes func(reflect.Value) map[string]*dynamodb.AttributeValue
 }
 
 func New(config ...*Config) *Dynago {
@@ -22,6 +42,10 @@ func New(config ...*Config) *Dynago {
 			FmtTagName:       "fmt",
 			TypeTagName:      "type",
 			PrecTagName:      "prec",
+			LayoutTagName:    "layout",
+			AdditionalAttributes: func(v reflect.Value) map[string]*dynamodb.AttributeValue {
+				return nil
+			},
 		}}
 	}
 	return &Dynago{config: config[0]}
@@ -44,6 +68,11 @@ func (d *Dynago) Item(v interface{}) map[string]*dynamodb.AttributeValue {
 	for i := 0; i < ty.NumField(); i++ {
 		cfg := d.fieldConfig(ty.Field(i))
 		m[cfg.attrName] = cfg.attrVal(val.Field(i))
+	}
+	if add := d.config.AdditionalAttributes(val); add != nil {
+		for k, v := range add {
+			m[k] = v
+		}
 	}
 	return m
 }

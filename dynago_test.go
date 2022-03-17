@@ -6,18 +6,17 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/twharmon/dynago"
 )
 
-// BenchmarkItemNoTags-10               	  865939	      1372 ns/op	    1352 B/op	      26 allocs/op
-// BenchmarkItemNoTagsByHand-10         	 1664457	       720.4 ns/op	     744 B/op	       9 allocs/op
-// BenchmarkItemTags-10                 	  627104	      1897 ns/op	    1361 B/op	      26 allocs/op
-// BenchmarkItemTagsByHand-10           	 1414177	       849.8 ns/op	     792 B/op	      12 allocs/op
-// BenchmarkUnmarshalNoTags-10          	 1000000	      1002 ns/op	     448 B/op	      15 allocs/op
-// BenchmarkUnmarshalNoTagsByHand-10    	 8324685	       157.8 ns/op	       0 B/op	       0 allocs/op
+// BenchmarkItem-10               	  438477	      2476 ns/op	    1793 B/op	      34 allocs/op
+// BenchmarkItemByHand-10         	 1000000	      1122 ns/op	    1000 B/op	      15 allocs/op
+// BenchmarkUnmarshal-10          	  450906	      2586 ns/op	     752 B/op	      22 allocs/op
+// BenchmarkUnmarshalByHand-10    	 3552892	       343.0 ns/op	       0 B/op	       0 allocs/op
 
 func assertEq(t *testing.T, want, got interface{}) {
 	if !reflect.DeepEqual(want, got) {
@@ -300,106 +299,161 @@ func TestUnmarshalBool(t *testing.T) {
 	assertEq(t, want, got)
 }
 
-func BenchmarkItemNoTags(b *testing.B) {
+func TestItemTimeNoLayoutTag(t *testing.T) {
 	type Person struct {
-		Name       string
-		Age        int64
-		Percentage float64
-		Alive      bool
+		Born time.Time
 	}
 	p := Person{
-		Name:       "George",
-		Age:        33,
-		Percentage: 25.323521,
-		Alive:      true,
+		Born: time.Now(),
+	}
+	want := map[string]*dynamodb.AttributeValue{
+		"Born": {S: aws.String(p.Born.Format(time.RFC3339))},
 	}
 	client := dynago.New()
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		client.Item(&p)
-	}
+	got := client.Item(&p)
+	assertEq(t, want, got)
 }
 
-func BenchmarkItemNoTagsByHand(b *testing.B) {
+func TestUnmarshalTimeNoLayoutTag(t *testing.T) {
 	type Person struct {
-		Name       string
-		Age        int64
-		Percentage float64
-		Alive      bool
+		Born time.Time
+	}
+	want := Person{
+		Born: time.Now(),
+	}
+	item := map[string]*dynamodb.AttributeValue{
+		"Born": {S: aws.String(want.Born.Format(time.RFC3339))},
+	}
+	client := dynago.New()
+	var got Person
+	if err := client.Unmarshal(item, &got); err != nil {
+		t.Fatalf("unexpected err: %s", err)
+	}
+	assertEq(t, want.Born.Unix(), got.Born.Unix())
+}
+
+func TestItemTimeWithLayoutTag(t *testing.T) {
+	type Person struct {
+		Born time.Time `layout:"15:04:05 2006-01-02"`
 	}
 	p := Person{
-		Name:       "George",
-		Age:        33,
-		Percentage: 25.323521,
-		Alive:      true,
+		Born: time.Now(),
 	}
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		_ = map[string]*dynamodb.AttributeValue{
-			"Name":       {S: &p.Name},
-			"Age":        {N: aws.String(strconv.FormatInt(p.Age, 10))},
-			"Percentage": {N: aws.String(strings.TrimRight(strconv.FormatFloat(p.Percentage, 'f', 14, 64), "0"))},
-			"Alive":      {BOOL: &p.Alive},
-		}
+	want := map[string]*dynamodb.AttributeValue{
+		"Born": {S: aws.String(p.Born.Format("15:04:05 2006-01-02"))},
 	}
+	client := dynago.New()
+	got := client.Item(&p)
+	assertEq(t, want, got)
 }
 
-func BenchmarkItemTags(b *testing.B) {
+// func TestUnmarshalTimeWithLayoutTag(t *testing.T) {
+// 	type Person struct {
+// 		Born time.Time `layout:"15:04:05 2006-01-02"`
+// 	}
+// 	want := Person{
+// 		Born: time.Now(),
+// 	}
+// 	item := map[string]*dynamodb.AttributeValue{
+// 		"Born": {S: aws.String(want.Born.Format("15:04:05 2006-01-02"))},
+// 	}
+// 	client := dynago.New()
+// 	var got Person
+// 	if err := client.Unmarshal(item, &got); err != nil {
+// 		t.Fatalf("unexpected err: %s", err)
+// 	}
+// 	assertEq(t, want.Born.Unix(), got.Born.Unix())
+// }
+
+func TestItemWithAdditionalAttributes(t *testing.T) {
+	type Person struct {
+		Name string
+	}
+	client := dynago.New(&dynago.Config{
+		AdditionalAttributes: func(v reflect.Value) map[string]*dynamodb.AttributeValue {
+			switch v.Interface().(type) {
+			case Person:
+				return map[string]*dynamodb.AttributeValue{
+					"Type": {S: aws.String("Person")},
+				}
+			}
+			return nil
+		},
+	})
+	p := Person{
+		Name: "foo",
+	}
+	want := map[string]*dynamodb.AttributeValue{
+		"Name": {S: &p.Name},
+		"Type": {S: aws.String("Person")},
+	}
+	got := client.Item(&p)
+	assertEq(t, want, got)
+}
+
+func BenchmarkItem(b *testing.B) {
 	type Person struct {
 		Name       string  `attribute:"name" fmt:"Person#%s"`
 		Age        int64   `attribute:"age"`
 		Percentage float64 `attribute:"percentage"`
 		Alive      bool    `attribute:"alive"`
+		Born       time.Time
 	}
 	p := Person{
 		Name:       "George",
 		Age:        33,
 		Percentage: 25.323521,
 		Alive:      true,
+		Born:       time.Now(),
 	}
 	client := dynago.New()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		client.Item(&p)
+		_ = client.Item(&p)
 	}
 }
 
-func BenchmarkItemTagsByHand(b *testing.B) {
+func BenchmarkItemByHand(b *testing.B) {
 	type Person struct {
-		Name       string
+		Name       string `attribute:"name" fmt:"Person#%s"`
 		Age        int64
 		Percentage float64
 		Alive      bool
+		Born       time.Time
 	}
 	p := Person{
 		Name:       "George",
 		Age:        33,
 		Percentage: 25.323521,
 		Alive:      true,
+		Born:       time.Now(),
 	}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		_ = map[string]*dynamodb.AttributeValue{
 			"name":       {S: aws.String(fmt.Sprintf("Person#%s", p.Name))},
-			"age":        {N: aws.String(strconv.FormatInt(p.Age, 10))},
-			"percentage": {N: aws.String(strings.TrimRight(strconv.FormatFloat(p.Percentage, 'f', 14, 64), "0"))},
-			"alive":      {BOOL: &p.Alive},
+			"Age":        {N: aws.String(strconv.FormatInt(p.Age, 10))},
+			"Percentage": {N: aws.String(strings.TrimRight(strconv.FormatFloat(p.Percentage, 'f', 14, 64), "0"))},
+			"Alive":      {BOOL: &p.Alive},
+			"Born":       {S: aws.String(p.Born.Format(time.RFC3339))},
 		}
 	}
 }
 
-func BenchmarkUnmarshalNoTags(b *testing.B) {
+func BenchmarkUnmarshal(b *testing.B) {
 	type Person struct {
-		Name       string
+		Name       string `attribute:"name" fmt:"Person#%s"`
 		Age        int64
 		Percentage float64
 		Alive      bool
+		Born       time.Time
 	}
 	item := map[string]*dynamodb.AttributeValue{
-		"Name":       {S: aws.String("George")},
+		"name":       {S: aws.String("Person#George")},
 		"Age":        {N: aws.String(strconv.FormatInt(33, 10))},
 		"Percentage": {N: aws.String(strings.TrimRight(strconv.FormatFloat(25.323521, 'f', 14, 64), "0"))},
 		"Alive":      {BOOL: aws.Bool(true)},
+		"Born":       {S: aws.String(time.Now().Format(time.RFC3339))},
 	}
 	client := dynago.New()
 	b.ResetTimer()
@@ -411,25 +465,27 @@ func BenchmarkUnmarshalNoTags(b *testing.B) {
 	}
 }
 
-func BenchmarkUnmarshalNoTagsByHand(b *testing.B) {
+func BenchmarkUnmarshalByHand(b *testing.B) {
 	type Person struct {
 		Name       string
 		Age        int64
 		Percentage float64
 		Alive      bool
+		Born       time.Time
 	}
 	item := map[string]*dynamodb.AttributeValue{
-		"Name":       {S: aws.String("George")},
+		"name":       {S: aws.String("Person#George")},
 		"Age":        {N: aws.String(strconv.FormatInt(33, 10))},
 		"Percentage": {N: aws.String(strings.TrimRight(strconv.FormatFloat(25.323521, 'f', 14, 64), "0"))},
 		"Alive":      {BOOL: aws.Bool(true)},
+		"Born":       {S: aws.String(time.Now().Format(time.RFC3339))},
 	}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		var p Person
 		var err error
-		if item["Name"] != nil && item["Name"].S != nil {
-			p.Name = *item["Name"].S
+		if item["name"] != nil && item["name"].S != nil {
+			p.Name = strings.TrimPrefix(*item["name"].S, "Person#")
 		}
 		if item["Age"] != nil && item["Age"].N != nil {
 			p.Age, err = strconv.ParseInt(*item["Age"].N, 10, 64)
@@ -445,6 +501,12 @@ func BenchmarkUnmarshalNoTagsByHand(b *testing.B) {
 		}
 		if item["Alive"] != nil && item["Alive"].BOOL != nil {
 			p.Alive = *item["Alive"].BOOL
+		}
+		if item["Born"] != nil && item["Born"].S != nil {
+			p.Born, err = time.Parse(time.RFC3339, *item["Born"].S)
+			if err != nil {
+				panic(err)
+			}
 		}
 	}
 }

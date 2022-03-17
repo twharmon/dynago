@@ -46,12 +46,10 @@ func main() {
 
 ## Benchmarks
 ```
-BenchmarkItemNoTags-10               	  865939	      1372 ns/op	    1352 B/op	      26 allocs/op
-BenchmarkItemNoTagsByHand-10         	 1664457	       720.4 ns/op	     744 B/op	       9 allocs/op
-BenchmarkItemTags-10                 	  627104	      1897 ns/op	    1361 B/op	      26 allocs/op
-BenchmarkItemTagsByHand-10           	 1414177	       849.8 ns/op	     792 B/op	      12 allocs/op
-BenchmarkUnmarshalNoTags-10          	 1000000	      1002 ns/op	     448 B/op	      15 allocs/op
-BenchmarkUnmarshalNoTagsByHand-10    	 8324685	       157.8 ns/op	       0 B/op	       0 allocs/op
+BenchmarkItem-10               	  438477	      2476 ns/op	    1793 B/op	      34 allocs/op
+BenchmarkItemByHand-10         	 1000000	      1122 ns/op	    1000 B/op	      15 allocs/op
+BenchmarkUnmarshal-10          	  450906	      2586 ns/op	     752 B/op	      22 allocs/op
+BenchmarkUnmarshalByHand-10    	 3552892	       343.0 ns/op	       0 B/op	       0 allocs/op
 ```
 
 ## Contribute

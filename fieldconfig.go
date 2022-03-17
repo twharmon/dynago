@@ -5,16 +5,20 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 )
+
+var timeType = reflect.TypeOf(time.Time{})
 
 type fieldConfig struct {
 	attrName string
 	attrType string
 	fmt      string
 	prec     int
+	layout   string
 }
 
 func (d *Dynago) fieldConfig(sf reflect.StructField) *fieldConfig {
@@ -44,6 +48,11 @@ func (d *Dynago) fieldConfig(sf reflect.StructField) *fieldConfig {
 			case reflect.Uint8:
 				fc.attrType = "B"
 			}
+		case reflect.Struct:
+			switch ty {
+			case timeType:
+				fc.attrType = "S"
+			}
 		}
 	}
 	if tag, ok := sf.Tag.Lookup(d.config.FmtTagName); ok {
@@ -52,6 +61,11 @@ func (d *Dynago) fieldConfig(sf reflect.StructField) *fieldConfig {
 		switch kind {
 		case reflect.String:
 			fc.fmt = "%s"
+		case reflect.Struct:
+			switch ty {
+			case timeType:
+				fc.fmt = "%s"
+			}
 		}
 	}
 	if tag, ok := sf.Tag.Lookup(d.config.PrecTagName); ok {
@@ -60,6 +74,17 @@ func (d *Dynago) fieldConfig(sf reflect.StructField) *fieldConfig {
 		switch kind {
 		case reflect.Float64:
 			fc.prec = 14
+		}
+	}
+	if tag, ok := sf.Tag.Lookup(d.config.LayoutTagName); ok {
+		fc.layout = tag
+	} else {
+		switch kind {
+		case reflect.Struct:
+			switch ty {
+			case timeType:
+				fc.layout = time.RFC3339
+			}
 		}
 	}
 	return &fc
@@ -72,6 +97,10 @@ func (c *fieldConfig) attrVal(v reflect.Value) *dynamodb.AttributeValue {
 	iface := v.Interface()
 	switch c.attrType {
 	case "S":
+		switch val := iface.(type) {
+		case time.Time:
+			iface = val.Format(c.layout)
+		}
 		return &dynamodb.AttributeValue{S: aws.String(fmt.Sprintf(c.fmt, iface))}
 	case "N":
 		switch val := iface.(type) {
@@ -96,19 +125,30 @@ func (c *fieldConfig) unmarshal(item map[string]*dynamodb.AttributeValue, v refl
 	for v.Kind() == reflect.Ptr {
 		v = v.Elem()
 	}
+	ty := v.Type()
 	switch c.attrType {
 	case "S":
 		if item[c.attrName] != nil && item[c.attrName].S != nil {
-			switch v.Type().Kind() {
+			str := *item[c.attrName].S
+			fmt.Sscanf(str, c.fmt, &str)
+			switch ty.Kind() {
 			case reflect.String:
-				var str string
-				fmt.Sscanf(*item[c.attrName].S, c.fmt, &str)
 				v.Set(reflect.ValueOf(str))
+			case reflect.Struct:
+				switch ty {
+				case timeType:
+					t, err := time.Parse(c.layout, str)
+					if err != nil {
+						err = fmt.Errorf("attribute: %s, time.Parse: %w", c.attrName, err)
+						return err
+					}
+					v.Set(reflect.ValueOf(t))
+				}
 			}
 		}
 	case "N":
 		if item[c.attrName] != nil && item[c.attrName].N != nil {
-			switch v.Type().Kind() {
+			switch ty.Kind() {
 			case reflect.Int64:
 				i, err := strconv.ParseInt(*item[c.attrName].N, 10, 64)
 				if err != nil {

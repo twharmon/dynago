@@ -1,6 +1,8 @@
 package dynago
 
-import "reflect"
+import (
+	"reflect"
+)
 
 func tyVal(v interface{}) (reflect.Type, reflect.Value) {
 	ty := reflect.TypeOf(v)
@@ -12,4 +14,8 @@ func tyVal(v interface{}) (reflect.Type, reflect.Value) {
 		val = val.Elem()
 	}
 	return ty, val
+}
+
+func trimDelims(s string) string {
+	return s[1 : len(s)-1]
 }

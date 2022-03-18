@@ -7,7 +7,7 @@ The aim of this package is to make it easier to work with AWS DynamoDB.
 ## Documentation
 For full documentation see [pkg.go.dev](https://pkg.go.dev/github.com/twharmon/dynago).
 
-## Example
+## Basic Example
 ```go
 package main
 
@@ -18,10 +18,10 @@ import (
 )
 
 type Post struct {
-	ID string `attribute:"PK" fmt:"Post#{ID}"`
-	Title string
-	Body string
-	Category string
+	ID      string `attr:"PK" fmt:"Post#{}"`
+	Title   string
+	Body    string
+	Created time.Time
 }
 
 func main() {
@@ -30,26 +30,86 @@ func main() {
 		ID:       "abc123",
 		Title:    "Hi",
 		Body:     "Hello world!",
-		Category: "announcement",
+		Created:  time.Now(),
 	}
-	item := ddb.Item(&p)
-	fmt.Println(item)
-	// item ready for DynamoDB PutItem:
-	// {
-	// 	"PK": {"S": "Post#abc123"},
-	//     "Title": {"S": "Hi"},
-	//     "Body": {"S": "Hello world!"},
-	//     "Category": {"S": "announcement"},
-	// }
+	item, _ := ddb.Marshal(&p)
+	fmt.Println(item) // map[string]*dynamodb.AttributeValue
+
+	var p2 Post
+	_ = ddb.Unmarshal(item, &p2)
+	fmt.Println(p2) // same as original Post
 }
 ```
 
+## Advanced Example
+```go
+package main
+
+import (
+	"fmt"
+
+	"github.com/twharmon/dynago"
+)
+
+type Post struct {
+	ID        string    `av:"SK" fmt:"Post#{}#Created#{Created}"`
+	AuthorID  string    `av:"PK" fmt:"Author#{}"`
+	Title     string
+	Body      string
+	Created   time.Time `av:"-"`
+}
+
+type Author struct {
+	ID string `av:"PK" fmt:"Author#{}"`
+}
+
+func main() {
+	ddb := dynago.New(&dynago.Config{
+		AdditionalAttrs: additionalAttrs,
+		AttrTagName:     "av",
+	})
+	
+	// ...
+}
+
+func additionalAttrs(v reflect.Value) map[string]*dynamodb.AttributeValue {
+	ty := v.Type().Name()
+
+	// Add a "Type" attribute to every item
+	m := map[string]*dynamodb.AttributeValue{
+		"Type": {S: &ty},
+	}
+
+	// Add additional attributes for specific types
+	switch val := v.Interface().(type) {
+	case Author:
+		// Sort key identical to partition key 
+		author := fmt.Sprintf("Author#%s", val.ID)
+		m["SK"] = &dynamodb.AttributeValue{S: &author}
+
+		// Add a fat partition on sparse global secondary index to
+		// make querying for all authors possible
+		m["GSIPK"] = &dynamodb.AttributeValue{S: &ty}
+		m["GSISK"] = &dynamodb.AttributeValue{S: &author}
+	}
+
+	return m
+}
+```
+
+## Todo
+- types
+	- Map (map, struct)
+	- List (slice, array)
+	- Set (slice, array)
+- query builder (out of scope?)
+
 ## Benchmarks
 ```
-BenchmarkItem-10               	  438477	      2476 ns/op	    1793 B/op	      34 allocs/op
-BenchmarkItemByHand-10         	 1000000	      1122 ns/op	    1000 B/op	      15 allocs/op
-BenchmarkUnmarshal-10          	  450906	      2586 ns/op	     752 B/op	      22 allocs/op
-BenchmarkUnmarshalByHand-10    	 3552892	       343.0 ns/op	       0 B/op	       0 allocs/op
+BenchmarkMarshal-10            	  446264	      2313 ns/op	    1819 B/op	      30 allocs/op
+BenchmarkMarshalByHand-10      	 1000000	      1120 ns/op	    1000 B/op	      15 allocs/op
+BenchmarkUnmarshal-10          	  614174	      1921 ns/op	     584 B/op	      11 allocs/op
+BenchmarkUnmarshalByHand-10    	 3537462	       343.4 ns/op	       0 B/op	       0 allocs/op
 ```
 
 ## Contribute

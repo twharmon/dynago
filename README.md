@@ -7,68 +7,110 @@ The aim of this package is to make it easier to work with AWS DynamoDB.
 ## Documentation
 For full documentation see [pkg.go.dev](https://pkg.go.dev/github.com/twharmon/dynago).
 
-## Basic Example
+## Usage
+
+### Basic
 ```go
 package main
 
 import (
 	"fmt"
+	"os"
+	"time"
 
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/twharmon/dynago"
 )
 
 type Post struct {
-	ID      string `attr:"PK" fmt:"Post#{}"`
-	Title   string
-	Body    string
-	Created time.Time
+	// Set attribute name with `attr` tag if it needs to be different
+	// that field name. Specify that this attribute is part of
+	// primary key with `idx:"primary"`. Use `fmt:"Post#{}"` to
+	// indicate how the value will be stored in DynamoDB.
+	ID string `idx:"primary" attr:"PK" fmt:"Post#{}"`
+
+	Created  time.Time `idx:"primary" attr:"SK" fmt:"Created#{}"`
+	AuthorID string
+	Title    string
+	Body     string
 }
 
 func main() {
-	ddb := dynago.New()
-	p := Post{
-		ID:       "abc123",
-		Title:    "Hi",
-		Body:     "Hello world!",
-		Created:  time.Now(),
-	}
-	item, _ := ddb.Marshal(&p)
-	fmt.Println(item) // map[string]*dynamodb.AttributeValue
+	// Get client.
+	ddb := dynago.New(getDynamoDB(), &dynago.Config{
+		DefaultTableName: "tmp",
+	})
 
-	var p2 Post
-	_ = ddb.Unmarshal(item, &p2)
-	fmt.Println(p2) // same as original Post
+	// Put item in DynamoDB.
+	p := Post{
+		ID:      "hello-world",
+		Title:   "Hi",
+		Body:    "Hello world!",
+		Created: time.Now(),
+	}
+	if err := ddb.PutItem().Exec(&p); err != nil {
+		panic(err)
+	}
+
+	// Get same item from DynamoDB. Fields used in the primary key
+	// must be set.
+	p2 := Post{
+		ID:      p.ID,
+		Created: p.Created,
+	}
+	if err := ddb.GetItem().Exec(&p2); err != nil {
+		panic(err)
+	}
+	fmt.Println(p2)
+}
+
+func getDynamoDB() *dynamodb.DynamoDB {
+	os.Setenv("AWS_SDK_LOAD_CONFIG", "true")
+	sess, err := session.NewSession()
+	if err != nil {
+		panic(err)
+	}
+	return dynamodb.New(sess)
 }
 ```
 
-## Advanced Example
+### Additional Attributes
 ```go
 package main
 
 import (
 	"fmt"
+	"os"
+	"reflect"
+	"time"
 
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/twharmon/dynago"
 )
 
 type Post struct {
-	ID        string    `av:"SK" fmt:"Post#{}#Created#{Created}"`
-	AuthorID  string    `av:"PK" fmt:"Author#{}"`
-	Title     string
-	Body      string
-	Created   time.Time `av:"-"`
+	ID       string `idx:"primary" attr:"PK" fmt:"Post#{}"`
+	AuthorID string
+	Title    string
+	Body     string
+	Created  time.Time `idx:"primary" attr:"SK" fmt:"Created#{}"`
 }
 
 type Author struct {
-	ID string `av:"PK" fmt:"Author#{}"`
+	// Copy same value to attribute SK by using `copy:"SK"` in tag.
+	ID   string `idx:"primary" attr:"PK" fmt:"Author#{}" copy:"SK"`
+	Name string
 }
 
 func main() {
-	ddb := dynago.New(&dynago.Config{
-		AdditionalAttrs: additionalAttrs,
-		AttrTagName:     "av",
+	// Get client.
+	ddb := dynago.New(getDynamoDB(), &dynago.Config{
+		DefaultTableName: "tmp",
+		AdditionalAttrs:  additionalAttrs,
 	})
-	
+
 	// ...
 }
 
@@ -81,15 +123,29 @@ func additionalAttrs(item map[string]*dynamodb.AttributeValue, v reflect.Value) 
 	// Add additional attributes for specific types
 	switch val := v.Interface().(type) {
 	case Author:
-		// Sort key identical to partition key 
-		author := fmt.Sprintf("Author#%s", val.ID)
-		item["SK"] = &dynamodb.AttributeValue{S: &author}
-
 		// Add a fat partition on sparse global secondary index to
 		// make querying for all authors possible
+		author := fmt.Sprintf("Author#%s", val.ID)
 		item["GSIPK"] = &dynamodb.AttributeValue{S: &ty}
 		item["GSISK"] = &dynamodb.AttributeValue{S: &author}
 	}
+}
+```
+
+### Compound Field Attributes
+```go
+type Event struct {
+	Org string `attr:"PK" idx:"primary" fmt:"Org#{}"`
+
+	// In this `fmt` tag, {} is equivalent to {Country}. You can
+	// reference a different field name by putting it's name in
+	// curly brackets.
+	Country string `idx:"primary" attr:"SK" fmt:"Country#{}#City#{City}"`
+
+	// Since the City is specified in the "SK" attribute, we can
+	// skip putting it in another attribute if we want.
+	City    string `attr:"-"`
+	Created time.Time
 }
 ```
 
@@ -98,7 +154,14 @@ func additionalAttrs(item map[string]*dynamodb.AttributeValue, v reflect.Value) 
 	- Map (map, struct)
 	- List (slice, array)
 	- Set (slice, array)
-- query builder (out of scope?)
+- query builder
+	- query
+	- scan
+	- delete
+	- update
+	- transactions
+	- misc
+		- add all sdk features
 
 ## Benchmarks
 ```

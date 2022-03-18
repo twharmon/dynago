@@ -154,7 +154,14 @@ type Event struct {
 	- Map (map, struct)
 	- List (slice, array)
 	- Set (slice, array)
-- query builder (out of scope?)
+- query builder
+	- query
+	- scan
+	- delete
+	- update
+	- transactions
+	- misc
+		- add all sdk features
 
 ## Benchmarks
 ```

@@ -72,28 +72,24 @@ func main() {
 	// ...
 }
 
-func additionalAttrs(v reflect.Value) map[string]*dynamodb.AttributeValue {
+func additionalAttrs(item map[string]*dynamodb.AttributeValue, v reflect.Value) {
 	ty := v.Type().Name()
 
 	// Add a "Type" attribute to every item
-	m := map[string]*dynamodb.AttributeValue{
-		"Type": {S: &ty},
-	}
+	item["Type"] = &dynamodb.AttributeValue{S: &ty}
 
 	// Add additional attributes for specific types
 	switch val := v.Interface().(type) {
 	case Author:
 		// Sort key identical to partition key 
 		author := fmt.Sprintf("Author#%s", val.ID)
-		m["SK"] = &dynamodb.AttributeValue{S: &author}
+		item["SK"] = &dynamodb.AttributeValue{S: &author}
 
 		// Add a fat partition on sparse global secondary index to
 		// make querying for all authors possible
-		m["GSIPK"] = &dynamodb.AttributeValue{S: &ty}
-		m["GSISK"] = &dynamodb.AttributeValue{S: &author}
+		item["GSIPK"] = &dynamodb.AttributeValue{S: &ty}
+		item["GSISK"] = &dynamodb.AttributeValue{S: &author}
 	}
-
-	return m
 }
 ```
 

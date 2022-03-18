@@ -459,14 +459,11 @@ func TestMarshalWithAdditionalAttributes(t *testing.T) {
 		Name string
 	}
 	client := dynago.New(&dynago.Config{
-		AdditionalAttrs: func(v reflect.Value) map[string]*dynamodb.AttributeValue {
+		AdditionalAttrs: func(item map[string]*dynamodb.AttributeValue, v reflect.Value) {
 			switch v.Interface().(type) {
 			case Person:
-				return map[string]*dynamodb.AttributeValue{
-					"Type": {S: aws.String("Person")},
-				}
+				item["Type"] = &dynamodb.AttributeValue{S: aws.String("Person")}
 			}
-			return nil
 		},
 	})
 	p := Person{

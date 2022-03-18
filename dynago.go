@@ -36,7 +36,7 @@ type Config struct {
 	LayoutTagName string
 
 	// AdditionalAttrs can be added for each dynamodb item.
-	AdditionalAttrs func(reflect.Value) map[string]*dynamodb.AttributeValue
+	AdditionalAttrs func(map[string]*dynamodb.AttributeValue, reflect.Value)
 }
 
 func New(config ...*Config) *Dynago {
@@ -48,9 +48,6 @@ func New(config ...*Config) *Dynago {
 				TypeTagName:   "type",
 				PrecTagName:   "prec",
 				LayoutTagName: "layout",
-				AdditionalAttrs: func(v reflect.Value) map[string]*dynamodb.AttributeValue {
-					return nil
-				},
 			},
 			cache: make(map[string]map[int]*field),
 		}
@@ -91,10 +88,8 @@ func (d *Dynago) Marshal(v interface{}) (map[string]*dynamodb.AttributeValue, er
 		}
 		m[cache[i].attrName] = cache[i].attrVal(val)
 	}
-	if add := d.config.AdditionalAttrs(val); add != nil {
-		for k, v := range add {
-			m[k] = v
-		}
+	if d.config.AdditionalAttrs != nil {
+		d.config.AdditionalAttrs(m, val)
 	}
 	return m, nil
 }

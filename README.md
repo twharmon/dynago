@@ -25,7 +25,7 @@ type Post struct {
 }
 
 func main() {
-	ddb := dynago.New()
+	ddb := dynago.New(getDdbClient())
 	p := Post{
 		ID:       "abc123",
 		Title:    "Hi",
@@ -34,6 +34,8 @@ func main() {
 	}
 	item, _ := ddb.Marshal(&p)
 	fmt.Println(item) // map[string]*dynamodb.AttributeValue
+
+	ddb.PutItem()
 
 	var p2 Post
 	_ = ddb.Unmarshal(item, &p2)

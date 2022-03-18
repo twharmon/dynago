@@ -6,12 +6,14 @@ import (
 	"sync"
 
 	"github.com/aws/aws-sdk-go/service/dynamodb"
+	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
 )
 
 type Dynago struct {
 	config   *Config
 	cache    map[string]map[int]*field
 	cacheMtx sync.Mutex
+	ddb      dynamodbiface.DynamoDBAPI
 }
 
 // Config is used to customize struct tag names.
@@ -35,27 +37,55 @@ type Config struct {
 	// values.
 	LayoutTagName string
 
+	// IndexTagName specifies which tag is used for table index name.
+	IndexTagName string
+
+	// AttrsToCopyTagName specifies which tag is used to determine
+	// which other attributes should have same value.
+	AttrsToCopyTagName string
+
 	// AdditionalAttrs can be added for each dynamodb item.
 	AdditionalAttrs func(map[string]*dynamodb.AttributeValue, reflect.Value)
+
+	// DefaultTableName is the default table queried when not
+	// specified.
+	DefaultTableName string
+
+	// DefaultConsistentRead is the default read consistency model.
+	DefaultConsistentRead bool
 }
 
-func New(config ...*Config) *Dynago {
-	if len(config) == 0 {
-		return &Dynago{
-			config: &Config{
-				AttrTagName:   "attr",
-				FmtTagName:    "fmt",
-				TypeTagName:   "type",
-				PrecTagName:   "prec",
-				LayoutTagName: "layout",
-			},
-			cache: make(map[string]map[int]*field),
-		}
-	}
-	return &Dynago{
-		config: config[0],
+func New(ddb dynamodbiface.DynamoDBAPI, config ...*Config) *Dynago {
+	d := Dynago{
 		cache:  make(map[string]map[int]*field),
+		config: &Config{},
 	}
+	if len(config) > 0 {
+		d.config = config[0]
+	}
+	if d.config.AttrTagName == "" {
+		d.config.AttrTagName = "attr"
+	}
+	if d.config.AttrsToCopyTagName == "" {
+		d.config.AttrsToCopyTagName = "copy"
+	}
+	if d.config.FmtTagName == "" {
+		d.config.FmtTagName = "fmt"
+	}
+	if d.config.TypeTagName == "" {
+		d.config.TypeTagName = "type"
+	}
+	if d.config.PrecTagName == "" {
+		d.config.PrecTagName = "prec"
+	}
+	if d.config.LayoutTagName == "" {
+		d.config.LayoutTagName = "layout"
+	}
+	if d.config.IndexTagName == "" {
+		d.config.IndexTagName = "idx"
+	}
+	d.ddb = ddb
+	return &d
 }
 
 func (d *Dynago) Unmarshal(item map[string]*dynamodb.AttributeValue, v interface{}) error {
@@ -86,10 +116,41 @@ func (d *Dynago) Marshal(v interface{}) (map[string]*dynamodb.AttributeValue, er
 		if cache[i].attrName == "-" {
 			continue
 		}
-		m[cache[i].attrName] = cache[i].attrVal(val)
+		attrVal := cache[i].attrVal(val)
+		m[cache[i].attrName] = attrVal
+		for _, cp := range cache[i].attrsToCopy {
+			m[cp] = attrVal
+		}
 	}
 	if d.config.AdditionalAttrs != nil {
 		d.config.AdditionalAttrs(m, val)
+	}
+	return m, nil
+}
+
+func (d *Dynago) key(v interface{}, index ...string) (map[string]*dynamodb.AttributeValue, error) {
+	m := make(map[string]*dynamodb.AttributeValue)
+	ty, val := tyVal(v)
+	cache, err := d.cachedStruct(ty)
+	if err != nil {
+		return nil, fmt.Errorf("d.cachedStruct: %w", err)
+	}
+	idx := "primary"
+	if len(index) > 0 {
+		idx = index[0]
+	}
+	for i := 0; i < ty.NumField(); i++ {
+		if cache[i].tableIndex != idx {
+			continue
+		}
+		if cache[i].attrName == "-" {
+			continue
+		}
+		attrVal := cache[i].attrVal(val)
+		m[cache[i].attrName] = attrVal
+		for _, cp := range cache[i].attrsToCopy {
+			m[cp] = attrVal
+		}
 	}
 	return m, nil
 }

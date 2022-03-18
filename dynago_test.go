@@ -18,12 +18,6 @@ import (
 // BenchmarkUnmarshal-10          	  614174	      1921 ns/op	     584 B/op	      11 allocs/op
 // BenchmarkUnmarshalByHand-10    	 3537462	       343.4 ns/op	       0 B/op	       0 allocs/op
 
-func assertEq(t *testing.T, want, got interface{}) {
-	if !reflect.DeepEqual(want, got) {
-		t.Fatalf("want: %v\n got: %v", want, got)
-	}
-}
-
 func TestMarshalString(t *testing.T) {
 	type Person struct {
 		Name string
@@ -34,7 +28,7 @@ func TestMarshalString(t *testing.T) {
 	want := map[string]*dynamodb.AttributeValue{
 		"Name": {S: aws.String(p.Name)},
 	}
-	client := dynago.New()
+	client := dynago.New(nil)
 	got, err := client.Marshal(&p)
 	if err != nil {
 		t.Fatalf("unexpected err: %s", err)
@@ -54,7 +48,7 @@ func TestMarshalPtrPtr(t *testing.T) {
 	want := map[string]*dynamodb.AttributeValue{
 		"Name": {S: *p.Name},
 	}
-	client := dynago.New()
+	client := dynago.New(nil)
 	got, err := client.Marshal(&p)
 	if err != nil {
 		t.Fatalf("unexpected err: %s", err)
@@ -72,7 +66,7 @@ func TestMarshalAttribute(t *testing.T) {
 	want := map[string]*dynamodb.AttributeValue{
 		"PK": {S: aws.String(p.Name)},
 	}
-	client := dynago.New()
+	client := dynago.New(nil)
 	got, err := client.Marshal(&p)
 	if err != nil {
 		t.Fatalf("unexpected err: %s", err)
@@ -90,7 +84,7 @@ func TestMarshalStringFmt(t *testing.T) {
 	want := map[string]*dynamodb.AttributeValue{
 		"Name": {S: aws.String(fmt.Sprintf("Person#%s", p.Name))},
 	}
-	client := dynago.New()
+	client := dynago.New(nil)
 	got, err := client.Marshal(&p)
 	if err != nil {
 		t.Fatalf("unexpected err: %s", err)
@@ -108,7 +102,7 @@ func TestMarshalStringFmtImplicit(t *testing.T) {
 	want := map[string]*dynamodb.AttributeValue{
 		"Name": {S: aws.String(fmt.Sprintf("Person#%s", p.Name))},
 	}
-	client := dynago.New()
+	client := dynago.New(nil)
 	got, err := client.Marshal(&p)
 	if err != nil {
 		t.Fatalf("unexpected err: %s", err)
@@ -128,7 +122,7 @@ func TestMarshalStringCompoundFmt(t *testing.T) {
 	want := map[string]*dynamodb.AttributeValue{
 		"PK": {S: aws.String(fmt.Sprintf("Team#%s#Person#%s", p.Team, p.Name))},
 	}
-	client := dynago.New()
+	client := dynago.New(nil)
 	got, err := client.Marshal(&p)
 	if err != nil {
 		t.Fatalf("unexpected err: %s", err)
@@ -148,7 +142,7 @@ func TestUnmarshalStringCompoundFmt(t *testing.T) {
 	item := map[string]*dynamodb.AttributeValue{
 		"PK": {S: aws.String(fmt.Sprintf("Team#%s#Person#%s", want.Team, want.Name))},
 	}
-	client := dynago.New()
+	client := dynago.New(nil)
 	var got Person
 	client.Unmarshal(item, &got)
 	assertEq(t, want, got)
@@ -164,7 +158,7 @@ func TestUnmarshalString(t *testing.T) {
 	item := map[string]*dynamodb.AttributeValue{
 		"Name": {S: aws.String(want.Name)},
 	}
-	client := dynago.New()
+	client := dynago.New(nil)
 	var got Person
 	client.Unmarshal(item, &got)
 	assertEq(t, want, got)
@@ -180,7 +174,7 @@ func TestUnmarshalAttribute(t *testing.T) {
 	item := map[string]*dynamodb.AttributeValue{
 		"PK": {S: aws.String(want.Name)},
 	}
-	client := dynago.New()
+	client := dynago.New(nil)
 	var got Person
 	client.Unmarshal(item, &got)
 	assertEq(t, want, got)
@@ -196,7 +190,7 @@ func TestUnmarshalStringFmt(t *testing.T) {
 	item := map[string]*dynamodb.AttributeValue{
 		"Name": {S: aws.String(fmt.Sprintf("Person#%s", want.Name))},
 	}
-	client := dynago.New()
+	client := dynago.New(nil)
 	var got Person
 	client.Unmarshal(item, &got)
 	assertEq(t, want, got)
@@ -212,7 +206,7 @@ func TestMarshalInt64(t *testing.T) {
 	want := map[string]*dynamodb.AttributeValue{
 		"Age": {N: aws.String(fmt.Sprintf("%d", p.Age))},
 	}
-	client := dynago.New()
+	client := dynago.New(nil)
 	got, err := client.Marshal(&p)
 	if err != nil {
 		t.Fatalf("unexpected err: %s", err)
@@ -230,7 +224,7 @@ func TestUnmarshalInt64(t *testing.T) {
 	item := map[string]*dynamodb.AttributeValue{
 		"Age": {N: aws.String(strconv.FormatInt(want.Age, 10))},
 	}
-	client := dynago.New()
+	client := dynago.New(nil)
 	var got Person
 	if err := client.Unmarshal(item, &got); err != nil {
 		t.Fatalf("unexpected err: %s", err)
@@ -248,7 +242,7 @@ func TestMarshalFloat64(t *testing.T) {
 	want := map[string]*dynamodb.AttributeValue{
 		"Age": {N: aws.String("33.234")},
 	}
-	client := dynago.New()
+	client := dynago.New(nil)
 	got, err := client.Marshal(&p)
 	if err != nil {
 		t.Fatalf("unexpected err: %s", err)
@@ -266,7 +260,7 @@ func TestUnmarshalFloat64(t *testing.T) {
 	item := map[string]*dynamodb.AttributeValue{
 		"Age": {N: aws.String("33.234")},
 	}
-	client := dynago.New()
+	client := dynago.New(nil)
 	var got Person
 	if err := client.Unmarshal(item, &got); err != nil {
 		t.Fatalf("unexpected err: %s", err)
@@ -284,7 +278,7 @@ func TestMarshalFloat64Prec(t *testing.T) {
 	want := map[string]*dynamodb.AttributeValue{
 		"Age": {N: aws.String("33.23")},
 	}
-	client := dynago.New()
+	client := dynago.New(nil)
 	got, err := client.Marshal(&p)
 	if err != nil {
 		t.Fatalf("unexpected err: %s", err)
@@ -302,7 +296,7 @@ func TestUnmarshalFloat64Prec(t *testing.T) {
 	item := map[string]*dynamodb.AttributeValue{
 		"Age": {N: aws.String("33.23")},
 	}
-	client := dynago.New()
+	client := dynago.New(nil)
 	var got Person
 	if err := client.Unmarshal(item, &got); err != nil {
 		t.Fatalf("unexpected err: %s", err)
@@ -320,7 +314,7 @@ func TestMarshalBytes(t *testing.T) {
 	want := map[string]*dynamodb.AttributeValue{
 		"ID": {B: p.ID},
 	}
-	client := dynago.New()
+	client := dynago.New(nil)
 	got, err := client.Marshal(&p)
 	if err != nil {
 		t.Fatalf("unexpected err: %s", err)
@@ -338,7 +332,7 @@ func TestUnmarshalBytes(t *testing.T) {
 	item := map[string]*dynamodb.AttributeValue{
 		"ID": {B: want.ID},
 	}
-	client := dynago.New()
+	client := dynago.New(nil)
 	var got Person
 	if err := client.Unmarshal(item, &got); err != nil {
 		t.Fatalf("unexpected err: %s", err)
@@ -356,7 +350,7 @@ func TestMarshalBool(t *testing.T) {
 	want := map[string]*dynamodb.AttributeValue{
 		"Tall": {BOOL: &p.Tall},
 	}
-	client := dynago.New()
+	client := dynago.New(nil)
 	got, err := client.Marshal(&p)
 	if err != nil {
 		t.Fatalf("unexpected err: %s", err)
@@ -374,7 +368,7 @@ func TestUnmarshalBool(t *testing.T) {
 	item := map[string]*dynamodb.AttributeValue{
 		"Tall": {BOOL: &want.Tall},
 	}
-	client := dynago.New()
+	client := dynago.New(nil)
 	var got Person
 	if err := client.Unmarshal(item, &got); err != nil {
 		t.Fatalf("unexpected err: %s", err)
@@ -392,7 +386,7 @@ func TestMarshalTimeNoLayoutTag(t *testing.T) {
 	want := map[string]*dynamodb.AttributeValue{
 		"Born": {S: aws.String(p.Born.Format(time.RFC3339))},
 	}
-	client := dynago.New()
+	client := dynago.New(nil)
 	got, err := client.Marshal(&p)
 	if err != nil {
 		t.Fatalf("unexpected err: %s", err)
@@ -410,7 +404,7 @@ func TestUnmarshalTimeNoLayoutTag(t *testing.T) {
 	item := map[string]*dynamodb.AttributeValue{
 		"Born": {S: aws.String(want.Born.Format(time.RFC3339))},
 	}
-	client := dynago.New()
+	client := dynago.New(nil)
 	var got Person
 	if err := client.Unmarshal(item, &got); err != nil {
 		t.Fatalf("unexpected err: %s", err)
@@ -428,7 +422,7 @@ func TestMarshalTimeWithLayoutTag(t *testing.T) {
 	want := map[string]*dynamodb.AttributeValue{
 		"Born": {S: aws.String(p.Born.Format("15:04:05 Z07:00 2006-01-02"))},
 	}
-	client := dynago.New()
+	client := dynago.New(nil)
 	got, err := client.Marshal(&p)
 	if err != nil {
 		t.Fatalf("unexpected err: %s", err)
@@ -446,7 +440,7 @@ func TestUnmarshalTimeWithLayoutTag(t *testing.T) {
 	item := map[string]*dynamodb.AttributeValue{
 		"Born": {S: aws.String(want.Born.Format("15:04:05 Z07:00 2006-01-02"))},
 	}
-	client := dynago.New()
+	client := dynago.New(nil)
 	var got Person
 	if err := client.Unmarshal(item, &got); err != nil {
 		t.Fatalf("unexpected err: %s", err)
@@ -458,7 +452,7 @@ func TestMarshalWithAdditionalAttributes(t *testing.T) {
 	type Person struct {
 		Name string
 	}
-	client := dynago.New(&dynago.Config{
+	client := dynago.New(nil, &dynago.Config{
 		AdditionalAttrs: func(item map[string]*dynamodb.AttributeValue, v reflect.Value) {
 			switch v.Interface().(type) {
 			case Person:
@@ -495,7 +489,7 @@ func BenchmarkMarshal(b *testing.B) {
 		Alive:      true,
 		Born:       time.Now(),
 	}
-	client := dynago.New()
+	client := dynago.New(nil)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		_, _ = client.Marshal(&p)
@@ -544,7 +538,7 @@ func BenchmarkUnmarshal(b *testing.B) {
 		"Alive":      {BOOL: aws.Bool(true)},
 		"Born":       {S: aws.String(time.Now().Format(time.RFC3339))},
 	}
-	client := dynago.New()
+	client := dynago.New(nil)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		var p Person

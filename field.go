@@ -15,13 +15,15 @@ var timeType = reflect.TypeOf(time.Time{})
 var fmtRegExp = regexp.MustCompile(`\{([A-Z]?[a-zA-Z0-9_]*)\}`)
 
 type field struct {
-	attrName   string
-	attrType   string
-	fmt        string
-	fmtRegExps map[string]*regexp.Regexp
-	prec       int
-	layout     string
-	index      int
+	attrName    string
+	attrType    string
+	fmt         string
+	fmtRegExps  map[string]*regexp.Regexp
+	prec        int
+	layout      string
+	index       int
+	attrsToCopy []string
+	tableIndex  string
 }
 
 func (d *Dynago) field(sf reflect.StructField, index int) (*field, error) {
@@ -91,6 +93,12 @@ func (d *Dynago) field(sf reflect.StructField, index int) (*field, error) {
 				f.layout = time.RFC3339
 			}
 		}
+	}
+	if tag, ok := sf.Tag.Lookup(d.config.IndexTagName); ok {
+		f.tableIndex = tag
+	}
+	if tag, ok := sf.Tag.Lookup(d.config.AttrsToCopyTagName); ok {
+		f.attrsToCopy = strings.Split(tag, ",")
 	}
 	return &f, nil
 }
@@ -167,9 +175,9 @@ func (f *field) attrVal(v reflect.Value) *dynamodb.AttributeValue {
 			s := strconv.FormatInt(val, 10)
 			return &dynamodb.AttributeValue{N: &s}
 		case float64:
-			s := strconv.FormatFloat(val, 'f', f.prec, 64)
-			s = strings.TrimRight(s, "0")
-			return &dynamodb.AttributeValue{N: &s}
+			return f.float64AttrVal(val)
+		case float32:
+			return f.float32AttrVal(val)
 		}
 	case "B":
 		return &dynamodb.AttributeValue{B: iface.([]byte)}
@@ -205,6 +213,13 @@ func (f *field) unmarshal(item map[string]*dynamodb.AttributeValue, v reflect.Va
 				fv.Set(reflect.ValueOf(i))
 			case reflect.Float64:
 				i, err := strconv.ParseFloat(*item[f.attrName].N, 64)
+				if err != nil {
+					err = fmt.Errorf("attr: %s, strconv.ParseFloat: %w", f.attrName, err)
+					return err
+				}
+				fv.Set(reflect.ValueOf(i))
+			case reflect.Float32:
+				i, err := strconv.ParseFloat(*item[f.attrName].N, 32)
 				if err != nil {
 					err = fmt.Errorf("attr: %s, strconv.ParseFloat: %w", f.attrName, err)
 					return err

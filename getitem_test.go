@@ -14,7 +14,7 @@ func TestGetItemBasic(t *testing.T) {
 	ddb := mock(t)
 	client := dynago.New(ddb)
 	type Person struct {
-		Name string `pk:"primary" attr:"PK" fmt:"Person#{}"`
+		Name string `idx:"primary" attr:"PK" fmt:"Person#{}"`
 		Age  int64
 	}
 	want := Person{
@@ -49,7 +49,7 @@ func TestGetItemDefaultTableName(t *testing.T) {
 	tableName := "bar"
 	client := dynago.New(ddb, &dynago.Config{DefaultTableName: tableName})
 	type Person struct {
-		Name string `pk:"primary" attr:"PK" fmt:"Person#{}"`
+		Name string `idx:"primary" attr:"PK" fmt:"Person#{}"`
 		Age  int64
 	}
 	want := Person{

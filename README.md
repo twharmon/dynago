@@ -155,7 +155,6 @@ type Event struct {
 	- List (slice, array)
 	- Set (slice, array)
 - query builder
-	- query
 	- scan
 	- delete
 	- update

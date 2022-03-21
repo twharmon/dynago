@@ -6,13 +6,13 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 )
 
-type PutItemQuery struct {
+type PutItem struct {
 	input  *dynamodb.PutItemInput
 	dynago *Dynago
 }
 
-func (d *Dynago) PutItem(table ...string) *PutItemQuery {
-	q := PutItemQuery{
+func (d *Dynago) PutItem(table ...string) *PutItem {
+	q := PutItem{
 		input:  &dynamodb.PutItemInput{},
 		dynago: d,
 	}
@@ -24,7 +24,7 @@ func (d *Dynago) PutItem(table ...string) *PutItemQuery {
 	return &q
 }
 
-func (q *PutItemQuery) Exec(v interface{}) error {
+func (q *PutItem) Exec(v interface{}) error {
 	var err error
 	q.input.Item, err = q.dynago.Marshal(v)
 	if err != nil {

@@ -6,13 +6,13 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 )
 
-type GetItemQuery struct {
+type GetItem struct {
 	input  *dynamodb.GetItemInput
 	dynago *Dynago
 }
 
-func (d *Dynago) GetItem(table ...string) *GetItemQuery {
-	q := GetItemQuery{
+func (d *Dynago) GetItem(table ...string) *GetItem {
+	q := GetItem{
 		input: &dynamodb.GetItemInput{
 			ConsistentRead: &d.config.DefaultConsistentRead,
 		},
@@ -26,7 +26,7 @@ func (d *Dynago) GetItem(table ...string) *GetItemQuery {
 	return &q
 }
 
-func (q *GetItemQuery) Exec(v interface{}) error {
+func (q *GetItem) Exec(v interface{}) error {
 	var err error
 	q.input.Key, err = q.dynago.key(v)
 	if err != nil {

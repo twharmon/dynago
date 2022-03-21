@@ -151,7 +151,7 @@ type Event struct {
 
 ## Todo
 - types
-	- Map (map, struct)
+	- Go maps
 	- List (slice, array)
 	- Set (slice, array)
 - query builder

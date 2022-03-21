@@ -1,6 +1,7 @@
 package dynago
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
 	"regexp"
@@ -24,11 +25,13 @@ type field struct {
 	index       int
 	attrsToCopy []string
 	tableIndex  string
+	client      *Dynago
 }
 
 func (d *Dynago) field(sf reflect.StructField, index int) (*field, error) {
 	var f field
 	f.index = index
+	f.client = d
 	if tag, ok := sf.Tag.Lookup(d.config.AttrTagName); ok {
 		f.attrName = tag
 	} else {
@@ -58,6 +61,8 @@ func (d *Dynago) field(sf reflect.StructField, index int) (*field, error) {
 			switch ty {
 			case timeType:
 				f.attrType = "S"
+			default:
+				f.attrType = "M"
 			}
 		}
 	}
@@ -139,7 +144,7 @@ func (f *field) parse(s string, v reflect.Value) error {
 		} else {
 			fval = v.FieldByName(fname)
 		}
-		for fval.Kind() == reflect.Ptr {
+		for fval.Kind() == reflect.Pointer {
 			fval = fval.Elem()
 		}
 		fty := fval.Type()
@@ -160,7 +165,7 @@ func (f *field) parse(s string, v reflect.Value) error {
 	return nil
 }
 
-func (f *field) attrVal(v reflect.Value) *dynamodb.AttributeValue {
+func (f *field) attrVal(v reflect.Value) (*dynamodb.AttributeValue, error) {
 	fv := v.Field(f.index)
 	for fv.Kind() == reflect.Ptr {
 		fv = fv.Elem()
@@ -168,32 +173,40 @@ func (f *field) attrVal(v reflect.Value) *dynamodb.AttributeValue {
 	iface := fv.Interface()
 	switch f.attrType {
 	case "S":
-		return &dynamodb.AttributeValue{S: f.format(v, f.index)}
+		return &dynamodb.AttributeValue{S: f.format(v, f.index)}, nil
 	case "N":
 		switch val := iface.(type) {
 		case int64:
 			s := strconv.FormatInt(val, 10)
-			return &dynamodb.AttributeValue{N: &s}
+			return &dynamodb.AttributeValue{N: &s}, nil
 		case float64:
-			return f.float64AttrVal(val)
+			return f.float64AttrVal(val), nil
 		case float32:
-			return f.float32AttrVal(val)
+			return f.float32AttrVal(val), nil
 		}
 	case "B":
-		return &dynamodb.AttributeValue{B: iface.([]byte)}
+		return &dynamodb.AttributeValue{B: iface.([]byte)}, nil
 	case "BOOL":
 		b := iface.(bool)
-		return &dynamodb.AttributeValue{BOOL: &b}
+		return &dynamodb.AttributeValue{BOOL: &b}, nil
+	case "M":
+		item, err := f.client.Marshal(iface)
+		if err != nil {
+			return nil, fmt.Errorf("f.client.Marshal: %w", err)
+		}
+		return &dynamodb.AttributeValue{M: item}, nil
 	}
-	panic("invalid attrTy")
+	return nil, errors.New("invalid attrTy")
 }
 
 func (f *field) unmarshal(item map[string]*dynamodb.AttributeValue, v reflect.Value) error {
 	fv := v.Field(f.index)
-	for fv.Kind() == reflect.Ptr {
+	for fv.Kind() == reflect.Pointer {
+		if fv.IsNil() {
+			fv.Set(reflect.New(fv.Type().Elem()))
+		}
 		fv = fv.Elem()
 	}
-	ty := fv.Type()
 	switch f.attrType {
 	case "S":
 		if item[f.attrName] != nil && item[f.attrName].S != nil {
@@ -203,6 +216,7 @@ func (f *field) unmarshal(item map[string]*dynamodb.AttributeValue, v reflect.Va
 		}
 	case "N":
 		if item[f.attrName] != nil && item[f.attrName].N != nil {
+			ty := fv.Type()
 			switch ty.Kind() {
 			case reflect.Int64:
 				i, err := strconv.ParseInt(*item[f.attrName].N, 10, 64)
@@ -234,6 +248,12 @@ func (f *field) unmarshal(item map[string]*dynamodb.AttributeValue, v reflect.Va
 	case "BOOL":
 		if item[f.attrName] != nil && item[f.attrName].BOOL != nil {
 			fv.Set(reflect.ValueOf(*item[f.attrName].BOOL))
+		}
+	case "M":
+		if item[f.attrName] != nil && item[f.attrName].M != nil {
+			if err := f.client.Unmarshal(item[f.attrName].M, fv.Addr().Interface()); err != nil {
+				return fmt.Errorf("f.client.Unmarshal: %w", err)
+			}
 		}
 	}
 	return nil

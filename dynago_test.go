@@ -196,6 +196,68 @@ func TestUnmarshalStringFmt(t *testing.T) {
 	assertEq(t, want, got)
 }
 
+func TestMarshalStruct(t *testing.T) {
+	type Pet struct {
+		Type string
+		Age  int64 `attr:"AGE"`
+	}
+	type Person struct {
+		Name string
+		Pet  *Pet
+	}
+	p := Person{
+		Name: "foo",
+		Pet: &Pet{
+			Type: "dog",
+			Age:  5,
+		},
+	}
+	want := map[string]*dynamodb.AttributeValue{
+		"Name": {S: &p.Name},
+		"Pet": {M: map[string]*dynamodb.AttributeValue{
+			"Type": {S: &p.Pet.Type},
+			"AGE":  {N: aws.String(strconv.FormatInt(p.Pet.Age, 10))},
+		}},
+	}
+	client := dynago.New(nil)
+	got, err := client.Marshal(&p)
+	if err != nil {
+		t.Fatalf("unexpected err: %s", err)
+	}
+	assertEq(t, want, got)
+}
+
+func TestUnmarshalStruct(t *testing.T) {
+	type Pet struct {
+		Type string
+		Age  int64 `attr:"AGE"`
+	}
+	type Person struct {
+		Name string
+		Pet  *Pet
+	}
+	want := Person{
+		Name: "foo",
+		Pet: &Pet{
+			Type: "dog",
+			Age:  5,
+		},
+	}
+	item := map[string]*dynamodb.AttributeValue{
+		"Name": {S: &want.Name},
+		"Pet": {M: map[string]*dynamodb.AttributeValue{
+			"Type": {S: &want.Pet.Type},
+			"AGE":  {N: aws.String(strconv.FormatInt(want.Pet.Age, 10))},
+		}},
+	}
+	client := dynago.New(nil)
+	var got Person
+	if err := client.Unmarshal(item, &got); err != nil {
+		t.Fatalf("unexpected err: %s", err)
+	}
+	assertEq(t, want, got)
+}
+
 func TestMarshalInt64(t *testing.T) {
 	type Person struct {
 		Age int64

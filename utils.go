@@ -10,11 +10,11 @@ import (
 
 func tyVal(v interface{}) (reflect.Type, reflect.Value) {
 	ty := reflect.TypeOf(v)
-	for ty.Kind() == reflect.Ptr {
+	for ty.Kind() == reflect.Pointer {
 		ty = ty.Elem()
 	}
 	val := reflect.ValueOf(v)
-	for val.Kind() == reflect.Ptr {
+	for val.Kind() == reflect.Pointer {
 		val = val.Elem()
 	}
 	return ty, val

@@ -116,7 +116,10 @@ func (d *Dynago) Marshal(v interface{}) (map[string]*dynamodb.AttributeValue, er
 		if cache[i].attrName == "-" {
 			continue
 		}
-		attrVal := cache[i].attrVal(val)
+		attrVal, err := cache[i].attrVal(val)
+		if err != nil {
+			return nil, fmt.Errorf("cache.attrVal: %w", err)
+		}
 		m[cache[i].attrName] = attrVal
 		for _, cp := range cache[i].attrsToCopy {
 			m[cp] = attrVal
@@ -146,7 +149,10 @@ func (d *Dynago) key(v interface{}, index ...string) (map[string]*dynamodb.Attri
 		if cache[i].attrName == "-" {
 			continue
 		}
-		attrVal := cache[i].attrVal(val)
+		attrVal, err := cache[i].attrVal(val)
+		if err != nil {
+			return nil, fmt.Errorf("cache.attrVal: %w", err)
+		}
 		m[cache[i].attrName] = attrVal
 		for _, cp := range cache[i].attrsToCopy {
 			m[cp] = attrVal

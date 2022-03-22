@@ -29,10 +29,6 @@ type Config struct {
 	// TypeTagName specifies which tag is used for DynamoDB type.
 	TypeTagName string
 
-	// PrecTagName specifies which tag is used for floating point.
-	// number precision
-	PrecTagName string
-
 	// LayoutTagName specifies which tag is used for formatting time
 	// values.
 	LayoutTagName string
@@ -74,9 +70,6 @@ func New(ddb dynamodbiface.DynamoDBAPI, config ...*Config) *Dynago {
 	}
 	if d.config.TypeTagName == "" {
 		d.config.TypeTagName = "type"
-	}
-	if d.config.PrecTagName == "" {
-		d.config.PrecTagName = "prec"
 	}
 	if d.config.LayoutTagName == "" {
 		d.config.LayoutTagName = "layout"

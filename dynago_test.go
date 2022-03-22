@@ -13,11 +13,6 @@ import (
 	"github.com/twharmon/dynago"
 )
 
-// BenchmarkMarshal-10            	  446264	      2313 ns/op	    1819 B/op	      30 allocs/op
-// BenchmarkMarshalByHand-10      	 1000000	      1120 ns/op	    1000 B/op	      15 allocs/op
-// BenchmarkUnmarshal-10          	  614174	      1921 ns/op	     584 B/op	      11 allocs/op
-// BenchmarkUnmarshalByHand-10    	 3537462	       343.4 ns/op	       0 B/op	       0 allocs/op
-
 func TestMarshalString(t *testing.T) {
 	type Person struct {
 		Name string
@@ -144,7 +139,9 @@ func TestUnmarshalStringCompoundFmt(t *testing.T) {
 	}
 	client := dynago.New(nil)
 	var got Person
-	client.Unmarshal(item, &got)
+	if err := client.Unmarshal(item, &got); err != nil {
+		t.Fatalf("unexpected err: %s", err)
+	}
 	assertEq(t, want, got)
 }
 
@@ -160,7 +157,9 @@ func TestUnmarshalString(t *testing.T) {
 	}
 	client := dynago.New(nil)
 	var got Person
-	client.Unmarshal(item, &got)
+	if err := client.Unmarshal(item, &got); err != nil {
+		t.Fatalf("unexpected err: %s", err)
+	}
 	assertEq(t, want, got)
 }
 
@@ -176,7 +175,9 @@ func TestUnmarshalAttribute(t *testing.T) {
 	}
 	client := dynago.New(nil)
 	var got Person
-	client.Unmarshal(item, &got)
+	if err := client.Unmarshal(item, &got); err != nil {
+		t.Fatalf("unexpected err: %s", err)
+	}
 	assertEq(t, want, got)
 }
 
@@ -192,7 +193,9 @@ func TestUnmarshalStringFmt(t *testing.T) {
 	}
 	client := dynago.New(nil)
 	var got Person
-	client.Unmarshal(item, &got)
+	if err := client.Unmarshal(item, &got); err != nil {
+		t.Fatalf("unexpected err: %s", err)
+	}
 	assertEq(t, want, got)
 }
 
@@ -252,6 +255,254 @@ func TestUnmarshalStruct(t *testing.T) {
 	}
 	client := dynago.New(nil)
 	var got Person
+	if err := client.Unmarshal(item, &got); err != nil {
+		t.Fatalf("unexpected err: %s", err)
+	}
+	assertEq(t, want, got)
+}
+
+func TestMarshalSliceString(t *testing.T) {
+	type Person struct {
+		Names []string
+	}
+	p := Person{
+		Names: []string{"foo", "bar"},
+	}
+	want := map[string]*dynamodb.AttributeValue{
+		"Names": {},
+	}
+	for i := range p.Names {
+		want["Names"].L = append(want["Names"].L, &dynamodb.AttributeValue{S: &p.Names[i]})
+	}
+	client := dynago.New(nil)
+	got, err := client.Marshal(&p)
+	if err != nil {
+		t.Fatalf("unexpected err: %s", err)
+	}
+	assertEq(t, want, got)
+}
+
+func TestMarshalSliceInt64(t *testing.T) {
+	type Person struct {
+		Scores []int64
+	}
+	p := Person{
+		Scores: []int64{2, 3, 4},
+	}
+	want := map[string]*dynamodb.AttributeValue{
+		"Scores": {},
+	}
+	for i := range p.Scores {
+		s := strconv.FormatInt(p.Scores[i], 10)
+		want["Scores"].L = append(want["Scores"].L, &dynamodb.AttributeValue{N: &s})
+	}
+	client := dynago.New(nil)
+	got, err := client.Marshal(&p)
+	if err != nil {
+		t.Fatalf("unexpected err: %s", err)
+	}
+	assertEq(t, want, got)
+}
+
+func TestMarshalSliceStruct(t *testing.T) {
+	type Pet struct {
+		Name string
+	}
+	type Person struct {
+		Pets []Pet
+	}
+	p := Person{
+		Pets: []Pet{{Name: "Harry"}, {Name: "Larry"}},
+	}
+	want := map[string]*dynamodb.AttributeValue{
+		"Pets": {},
+	}
+	for i := range p.Pets {
+		av := &dynamodb.AttributeValue{
+			M: map[string]*dynamodb.AttributeValue{
+				"Name": {S: &p.Pets[i].Name},
+			},
+		}
+		want["Pets"].L = append(want["Pets"].L, av)
+	}
+	client := dynago.New(nil)
+	got, err := client.Marshal(&p)
+	if err != nil {
+		t.Fatalf("unexpected err: %s", err)
+	}
+	assertEq(t, want, got)
+}
+
+func TestMarshalSliceStructPtr(t *testing.T) {
+	type Pet struct {
+		Name string
+	}
+	type Person struct {
+		Pets []*Pet
+	}
+	p := Person{
+		Pets: []*Pet{{Name: "Harry"}, {Name: "Larry"}},
+	}
+	want := map[string]*dynamodb.AttributeValue{
+		"Pets": {},
+	}
+	for i := range p.Pets {
+		av := &dynamodb.AttributeValue{
+			M: map[string]*dynamodb.AttributeValue{
+				"Name": {S: &p.Pets[i].Name},
+			},
+		}
+		want["Pets"].L = append(want["Pets"].L, av)
+	}
+	client := dynago.New(nil)
+	got, err := client.Marshal(&p)
+	if err != nil {
+		t.Fatalf("unexpected err: %s", err)
+	}
+	assertEq(t, want, got)
+}
+
+func TestMarshalSliceTime(t *testing.T) {
+	type Person struct {
+		Appointments []time.Time `layout:"Monday, 02-Jan-06 15:04:05 MST"`
+	}
+	p := Person{
+		Appointments: []time.Time{time.Now(), time.Now().Add(time.Hour)},
+	}
+	want := map[string]*dynamodb.AttributeValue{
+		"Appointments": {},
+	}
+	for i := range p.Appointments {
+		s := p.Appointments[i].Format("Monday, 02-Jan-06 15:04:05 MST")
+		av := &dynamodb.AttributeValue{S: &s}
+		want["Appointments"].L = append(want["Appointments"].L, av)
+	}
+	client := dynago.New(nil)
+	got, err := client.Marshal(&p)
+	if err != nil {
+		t.Fatalf("unexpected err: %s", err)
+	}
+	assertEq(t, want, got)
+}
+
+func TestMarshalSliceTimePtr(t *testing.T) {
+	type Person struct {
+		Appointments []*time.Time
+	}
+	a := time.Now()
+	b := time.Now().Add(time.Hour)
+	p := Person{
+		Appointments: []*time.Time{&a, &b},
+	}
+	want := map[string]*dynamodb.AttributeValue{
+		"Appointments": {},
+	}
+	for i := range p.Appointments {
+		s := p.Appointments[i].Format(time.RFC3339)
+		av := &dynamodb.AttributeValue{S: &s}
+		want["Appointments"].L = append(want["Appointments"].L, av)
+	}
+	client := dynago.New(nil)
+	got, err := client.Marshal(&p)
+	if err != nil {
+		t.Fatalf("unexpected err: %s", err)
+	}
+	assertEq(t, want, got)
+}
+
+func TestUnmarshalSliceString(t *testing.T) {
+	type Person struct {
+		Names []string
+	}
+	want := Person{
+		Names: []string{"foo", "bar"},
+	}
+	item := map[string]*dynamodb.AttributeValue{
+		"Names": {},
+	}
+	for i := range want.Names {
+		item["Names"].L = append(item["Names"].L, &dynamodb.AttributeValue{S: &want.Names[i]})
+	}
+	client := dynago.New(nil)
+	var got Person
+	if err := client.Unmarshal(item, &got); err != nil {
+		t.Fatalf("unexpected err: %s", err)
+	}
+	assertEq(t, want, got)
+}
+
+func TestUnmarshalSliceStruct(t *testing.T) {
+	type Pet struct {
+		Name string
+	}
+	type Person struct {
+		Pets []Pet
+	}
+	want := Person{
+		Pets: []Pet{{Name: "Harry"}, {Name: "Larry"}},
+	}
+	item := map[string]*dynamodb.AttributeValue{
+		"Pets": {},
+	}
+	for i := range want.Pets {
+		item["Pets"].L = append(item["Pets"].L, &dynamodb.AttributeValue{M: map[string]*dynamodb.AttributeValue{
+			"Name": {S: &want.Pets[i].Name},
+		}})
+	}
+	client := dynago.New(nil)
+	var got Person
+	if err := client.Unmarshal(item, &got); err != nil {
+		t.Fatalf("unexpected err: %s", err)
+	}
+	assertEq(t, want, got)
+}
+
+func TestUnmarshalSliceStructPtr(t *testing.T) {
+	type Pet struct {
+		Name string
+	}
+	type Person struct {
+		Pets []*Pet
+	}
+	want := Person{
+		Pets: []*Pet{{Name: "Harry"}, {Name: "Larry"}},
+	}
+	item := map[string]*dynamodb.AttributeValue{
+		"Pets": {},
+	}
+	for i := range want.Pets {
+		item["Pets"].L = append(item["Pets"].L, &dynamodb.AttributeValue{M: map[string]*dynamodb.AttributeValue{
+			"Name": {S: &want.Pets[i].Name},
+		}})
+	}
+	client := dynago.New(nil)
+	var got Person
+	if err := client.Unmarshal(item, &got); err != nil {
+		t.Fatalf("unexpected err: %s", err)
+	}
+	assertEq(t, want, got)
+}
+
+func TestUnmarshalSliceSlice(t *testing.T) {
+	type T struct {
+		SS [][]string
+	}
+	want := T{
+		SS: [][]string{{"foo", "bar"}, {"bar", "baz"}},
+	}
+	item := map[string]*dynamodb.AttributeValue{
+		"SS": {L: []*dynamodb.AttributeValue{
+			{},
+			{},
+		}},
+	}
+	for i := range want.SS {
+		for j := range want.SS[i] {
+			item["SS"].L[i].L = append(item["SS"].L[i].L, &dynamodb.AttributeValue{S: &want.SS[i][j]})
+		}
+	}
+	client := dynago.New(nil)
+	var got T
 	if err := client.Unmarshal(item, &got); err != nil {
 		t.Fatalf("unexpected err: %s", err)
 	}
@@ -325,24 +576,6 @@ func TestUnmarshalFloat64(t *testing.T) {
 	client := dynago.New(nil)
 	var got Person
 	if err := client.Unmarshal(item, &got); err != nil {
-		t.Fatalf("unexpected err: %s", err)
-	}
-	assertEq(t, want, got)
-}
-
-func TestMarshalFloat64Prec(t *testing.T) {
-	type Person struct {
-		Age float64 `prec:"2"`
-	}
-	p := Person{
-		Age: 33.234,
-	}
-	want := map[string]*dynamodb.AttributeValue{
-		"Age": {N: aws.String("33.23")},
-	}
-	client := dynago.New(nil)
-	got, err := client.Marshal(&p)
-	if err != nil {
 		t.Fatalf("unexpected err: %s", err)
 	}
 	assertEq(t, want, got)

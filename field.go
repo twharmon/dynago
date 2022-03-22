@@ -1,11 +1,9 @@
 package dynago
 
 import (
-	"errors"
 	"fmt"
 	"reflect"
 	"regexp"
-	"strconv"
 	"strings"
 	"time"
 
@@ -20,7 +18,6 @@ type field struct {
 	attrType    string
 	fmt         string
 	fmtRegExps  map[string]*regexp.Regexp
-	prec        int
 	layout      string
 	index       int
 	attrsToCopy []string
@@ -56,6 +53,8 @@ func (d *Dynago) field(sf reflect.StructField, index int) (*field, error) {
 			switch ty.Elem().Kind() {
 			case reflect.Uint8:
 				f.attrType = "B"
+			default:
+				f.attrType = "L"
 			}
 		case reflect.Struct:
 			switch ty {
@@ -76,24 +75,21 @@ func (d *Dynago) field(sf reflect.StructField, index int) (*field, error) {
 		fname := trimDelims(match)
 		f.fmtRegExps[fname] = regexp.MustCompile("^" + fmtRegExp.ReplaceAllString(strings.ReplaceAll(f.fmt, match, "(.*?)"), ".*?") + "$")
 	}
-	var err error
-	if tag, ok := sf.Tag.Lookup(d.config.PrecTagName); ok {
-		f.prec, err = strconv.Atoi(tag)
-		if err != nil {
-			return nil, fmt.Errorf("strconv.Atoi: %w", err)
-		}
-	} else {
-		switch kind {
-		case reflect.Float64:
-			f.prec = 14
-		}
-	}
 	if tag, ok := sf.Tag.Lookup(d.config.LayoutTagName); ok {
 		f.layout = tag
 	} else {
 		switch kind {
 		case reflect.Struct:
 			switch ty {
+			case timeType:
+				f.layout = time.RFC3339
+			}
+		case reflect.Slice:
+			elTy := ty.Elem()
+			for elTy.Kind() == reflect.Pointer {
+				elTy = elTy.Elem()
+			}
+			switch elTy {
 			case timeType:
 				f.layout = time.RFC3339
 			}
@@ -167,36 +163,14 @@ func (f *field) parse(s string, v reflect.Value) error {
 
 func (f *field) attrVal(v reflect.Value) (*dynamodb.AttributeValue, error) {
 	fv := v.Field(f.index)
-	for fv.Kind() == reflect.Ptr {
+	for fv.Kind() == reflect.Pointer {
 		fv = fv.Elem()
 	}
-	iface := fv.Interface()
 	switch f.attrType {
 	case "S":
 		return &dynamodb.AttributeValue{S: f.format(v, f.index)}, nil
-	case "N":
-		switch val := iface.(type) {
-		case int64:
-			s := strconv.FormatInt(val, 10)
-			return &dynamodb.AttributeValue{N: &s}, nil
-		case float64:
-			return f.float64AttrVal(val), nil
-		case float32:
-			return f.float32AttrVal(val), nil
-		}
-	case "B":
-		return &dynamodb.AttributeValue{B: iface.([]byte)}, nil
-	case "BOOL":
-		b := iface.(bool)
-		return &dynamodb.AttributeValue{BOOL: &b}, nil
-	case "M":
-		item, err := f.client.Marshal(iface)
-		if err != nil {
-			return nil, fmt.Errorf("f.client.Marshal: %w", err)
-		}
-		return &dynamodb.AttributeValue{M: item}, nil
 	}
-	return nil, errors.New("invalid attrTy")
+	return f.client.simpleMarshal(fv, f.layout)
 }
 
 func (f *field) unmarshal(item map[string]*dynamodb.AttributeValue, v reflect.Value) error {
@@ -214,47 +188,8 @@ func (f *field) unmarshal(item map[string]*dynamodb.AttributeValue, v reflect.Va
 				return fmt.Errorf("parse: %s", err)
 			}
 		}
-	case "N":
-		if item[f.attrName] != nil && item[f.attrName].N != nil {
-			ty := fv.Type()
-			switch ty.Kind() {
-			case reflect.Int64:
-				i, err := strconv.ParseInt(*item[f.attrName].N, 10, 64)
-				if err != nil {
-					err = fmt.Errorf("attr: %s, strconv.ParseInt: %w", f.attrName, err)
-					return err
-				}
-				fv.Set(reflect.ValueOf(i))
-			case reflect.Float64:
-				i, err := strconv.ParseFloat(*item[f.attrName].N, 64)
-				if err != nil {
-					err = fmt.Errorf("attr: %s, strconv.ParseFloat: %w", f.attrName, err)
-					return err
-				}
-				fv.Set(reflect.ValueOf(i))
-			case reflect.Float32:
-				i, err := strconv.ParseFloat(*item[f.attrName].N, 32)
-				if err != nil {
-					err = fmt.Errorf("attr: %s, strconv.ParseFloat: %w", f.attrName, err)
-					return err
-				}
-				fv.Set(reflect.ValueOf(i))
-			}
-		}
-	case "B":
-		if item[f.attrName] != nil && item[f.attrName].B != nil {
-			fv.Set(reflect.ValueOf(item[f.attrName].B))
-		}
-	case "BOOL":
-		if item[f.attrName] != nil && item[f.attrName].BOOL != nil {
-			fv.Set(reflect.ValueOf(*item[f.attrName].BOOL))
-		}
-	case "M":
-		if item[f.attrName] != nil && item[f.attrName].M != nil {
-			if err := f.client.Unmarshal(item[f.attrName].M, fv.Addr().Interface()); err != nil {
-				return fmt.Errorf("f.client.Unmarshal: %w", err)
-			}
-		}
+	default:
+		return f.client.simpleUnmarshal(fv, item[f.attrName], f.layout)
 	}
 	return nil
 }

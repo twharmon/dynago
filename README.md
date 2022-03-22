@@ -152,11 +152,9 @@ type Event struct {
 ## Todo
 - types
 	- Go maps
-	- List (slice, array)
 	- Set (slice, array)
 - query builder
 	- scan
-	- delete
 	- update
 	- transactions
 	- misc
@@ -164,10 +162,10 @@ type Event struct {
 
 ## Benchmarks
 ```
-BenchmarkMarshal-10            	  446264	      2313 ns/op	    1819 B/op	      30 allocs/op
-BenchmarkMarshalByHand-10      	 1000000	      1120 ns/op	    1000 B/op	      15 allocs/op
-BenchmarkUnmarshal-10          	  614174	      1921 ns/op	     584 B/op	      11 allocs/op
-BenchmarkUnmarshalByHand-10    	 3537462	       343.4 ns/op	       0 B/op	       0 allocs/op
+BenchmarkMarshal-10            	  472528	      2180 ns/op	    1733 B/op	      27 allocs/op
+BenchmarkMarshalByHand-10      	 1000000	      1049 ns/op	     976 B/op	      14 allocs/op
+BenchmarkUnmarshal-10          	  625406	      1862 ns/op	     578 B/op	      11 allocs/op
+BenchmarkUnmarshalByHand-10    	 3540060	       344.1 ns/op	       0 B/op	       0 allocs/op
 ```
 
 ## Contribute

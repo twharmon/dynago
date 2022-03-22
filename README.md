@@ -152,7 +152,7 @@ type Event struct {
 ## Todo
 - types
 	- Go maps
-	- Set (slice, array)
+	- Sets
 - query builder
 	- scan
 	- update

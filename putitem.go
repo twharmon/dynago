@@ -7,32 +7,46 @@ import (
 )
 
 type PutItem struct {
+	item   interface{}
 	input  *dynamodb.PutItemInput
 	dynago *Dynago
 }
 
-func (d *Dynago) PutItem(table ...string) *PutItem {
-	q := PutItem{
-		input:  &dynamodb.PutItemInput{},
+func (d *Dynago) Put(item interface{}) *PutItem {
+	return &PutItem{
+		input:  &dynamodb.PutItemInput{TableName: &d.config.DefaultTableName},
 		dynago: d,
+		item:   item,
 	}
-	if len(table) == 0 {
-		q.input.TableName = &d.config.DefaultTableName
-	} else {
-		q.input.TableName = &table[0]
-	}
-	return &q
 }
 
-func (q *PutItem) Exec(v interface{}) error {
+func (q *PutItem) Table(table string) *PutItem {
+	q.input.TableName = &table
+	return q
+}
+
+func (q *PutItem) Exec() error {
 	var err error
-	q.input.Item, err = q.dynago.Marshal(v)
+	q.input.Item, err = q.dynago.Marshal(q.item)
 	if err != nil {
 		return fmt.Errorf("q.dynago.Marshal: %w", err)
 	}
 	_, err = q.dynago.ddb.PutItem(q.input)
 	if err != nil {
-		return fmt.Errorf("d.ddb.GetItem: %w", err)
+		return fmt.Errorf("d.ddb.PutItem: %w", err)
 	}
 	return err
+}
+
+func (q *PutItem) TransactionWriteItem() (*dynamodb.TransactWriteItem, error) {
+	item, err := q.dynago.Marshal(q.item)
+	if err != nil {
+		return nil, err
+	}
+	return &dynamodb.TransactWriteItem{
+		Put: &dynamodb.Put{
+			Item:      item,
+			TableName: q.input.TableName,
+		},
+	}, nil
 }

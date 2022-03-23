@@ -11,25 +11,32 @@ import (
 type Query struct {
 	input  *dynamodb.QueryInput
 	dynago *Dynago
+	items  interface{}
 }
 
-func (d *Dynago) Query(table ...string) *Query {
-	q := Query{
+func (d *Dynago) Query(items interface{}) *Query {
+	return &Query{
 		input: &dynamodb.QueryInput{
 			ConsistentRead: &d.config.DefaultConsistentRead,
+			TableName:      &d.config.DefaultTableName,
 		},
+		items:  items,
 		dynago: d,
 	}
-	if len(table) == 0 {
-		q.input.TableName = &d.config.DefaultTableName
-	} else {
-		q.input.TableName = &table[0]
-	}
-	return &q
+}
+
+func (q *Query) Table(name string) *Query {
+	q.input.TableName = &name
+	return q
 }
 
 func (q *Query) Index(index string) *Query {
 	q.input.IndexName = &index
+	return q
+}
+
+func (q *Query) ScanIndexForward(val bool) *Query {
+	q.input.ScanIndexForward = &val
 	return q
 }
 
@@ -51,8 +58,8 @@ func (q *Query) ExpressionAttributeValue(key string, val interface{}) *Query {
 	return q
 }
 
-func (q *Query) Exec(v interface{}) error {
-	rv := reflect.ValueOf(v)
+func (q *Query) Exec() error {
+	rv := reflect.ValueOf(q.items)
 	if rv.Kind() != reflect.Pointer {
 		return errors.New("dynago: dynago.Query.Exec: v must be pointer")
 	}
@@ -64,7 +71,7 @@ func (q *Query) Exec(v interface{}) error {
 	if err != nil {
 		return fmt.Errorf("d.ddb.GetItem: %w", err)
 	}
-	rt := reflect.TypeOf(v)
+	rt := reflect.TypeOf(q.items)
 	for rt.Kind() == reflect.Pointer {
 		rt = rt.Elem()
 	}

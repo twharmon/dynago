@@ -22,7 +22,7 @@ func TestGetItemBasic(t *testing.T) {
 		Age:  33,
 	}
 	tableName := "bar"
-	ddb.MockGetItem(&dynamodb.GetItemInput{
+	ddb.MockGet(&dynamodb.GetItemInput{
 		Key: map[string]*dynamodb.AttributeValue{
 			"PK": {S: aws.String(fmt.Sprintf("Person#%s", want.Name))},
 		},
@@ -37,7 +37,7 @@ func TestGetItemBasic(t *testing.T) {
 	got := Person{
 		Name: want.Name,
 	}
-	if err := client.GetItem(tableName).Exec(&got); err != nil {
+	if err := client.Get(&got).Table(tableName).Exec(); err != nil {
 		t.Fatalf("unexpected err: %s", err)
 	}
 	assertEq(t, want, got)
@@ -56,7 +56,7 @@ func TestGetItemDefaultTableName(t *testing.T) {
 		Name: "foo",
 		Age:  33,
 	}
-	ddb.MockGetItem(&dynamodb.GetItemInput{
+	ddb.MockGet(&dynamodb.GetItemInput{
 		Key: map[string]*dynamodb.AttributeValue{
 			"PK": {S: aws.String(fmt.Sprintf("Person#%s", want.Name))},
 		},
@@ -71,7 +71,7 @@ func TestGetItemDefaultTableName(t *testing.T) {
 	got := Person{
 		Name: want.Name,
 	}
-	if err := client.GetItem().Exec(&got); err != nil {
+	if err := client.Get(&got).Exec(); err != nil {
 		t.Fatalf("unexpected err: %s", err)
 	}
 	assertEq(t, want, got)

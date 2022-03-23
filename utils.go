@@ -111,7 +111,7 @@ func (d *Dynago) simpleMarshal(v reflect.Value, layout string) (*dynamodb.Attrib
 			val := v.Interface().([]byte)
 			return &dynamodb.AttributeValue{B: val}, nil
 		}
-		av := &dynamodb.AttributeValue{}
+		av := &dynamodb.AttributeValue{L: []*dynamodb.AttributeValue{}}
 		for i := 0; i < v.Len(); i++ {
 			item, err := d.simpleMarshal(v.Index(i), layout)
 			if err != nil {

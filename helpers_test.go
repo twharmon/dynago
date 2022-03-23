@@ -23,6 +23,7 @@ type ddbMock struct {
 	queryOutput     *dynamodb.QueryOutput
 	putItemInput    *dynamodb.PutItemInput
 	deleteItemInput *dynamodb.DeleteItemInput
+	txWriteInput    *dynamodb.TransactWriteItemsInput
 }
 
 func (m *ddbMock) GetItem(i *dynamodb.GetItemInput) (*dynamodb.GetItemOutput, error) {
@@ -35,9 +36,21 @@ func (m *ddbMock) GetItem(i *dynamodb.GetItemInput) (*dynamodb.GetItemOutput, er
 	return &o, nil
 }
 
-func (m *ddbMock) MockGetItem(i *dynamodb.GetItemInput, o *dynamodb.GetItemOutput) {
+func (m *ddbMock) MockGet(i *dynamodb.GetItemInput, o *dynamodb.GetItemOutput) {
 	m.getItemInput = i
 	m.getItemOutput = o
+}
+
+func (m *ddbMock) MockTransactWriteItems(i *dynamodb.TransactWriteItemsInput) {
+	m.txWriteInput = i
+}
+
+func (m *ddbMock) TransactWriteItems(i *dynamodb.TransactWriteItemsInput) (*dynamodb.TransactWriteItemsOutput, error) {
+	if !reflect.DeepEqual(i, m.txWriteInput) {
+		m.t.Fatalf("want %v; got %v", m.txWriteInput, i)
+	}
+	m.txWriteInput = nil
+	return nil, nil
 }
 
 func (m *ddbMock) done() {
@@ -56,6 +69,9 @@ func (m *ddbMock) done() {
 	if m.getItemOutput != nil {
 		m.t.Fatalf("expectations not met")
 	}
+	if m.txWriteInput != nil {
+		m.t.Fatalf("expectations not met")
+	}
 }
 
 func (m *ddbMock) PutItem(i *dynamodb.PutItemInput) (*dynamodb.PutItemOutput, error) {
@@ -66,7 +82,7 @@ func (m *ddbMock) PutItem(i *dynamodb.PutItemInput) (*dynamodb.PutItemOutput, er
 	return nil, nil
 }
 
-func (m *ddbMock) MockPutItem(i *dynamodb.PutItemInput) {
+func (m *ddbMock) MockPut(i *dynamodb.PutItemInput) {
 	m.putItemInput = i
 }
 
@@ -78,7 +94,7 @@ func (m *ddbMock) DeleteItem(i *dynamodb.DeleteItemInput) (*dynamodb.DeleteItemO
 	return nil, nil
 }
 
-func (m *ddbMock) MockDeleteItem(i *dynamodb.DeleteItemInput) {
+func (m *ddbMock) MockDelete(i *dynamodb.DeleteItemInput) {
 	m.deleteItemInput = i
 }
 

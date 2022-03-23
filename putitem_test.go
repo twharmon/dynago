@@ -22,14 +22,14 @@ func TestPutItemBasic(t *testing.T) {
 		Name: "foo",
 		Age:  33,
 	}
-	ddb.MockPutItem(&dynamodb.PutItemInput{
+	ddb.MockPut(&dynamodb.PutItemInput{
 		Item: map[string]*dynamodb.AttributeValue{
 			"PK":  {S: aws.String(fmt.Sprintf("Person#%s", p.Name))},
 			"Age": {N: aws.String(strconv.FormatInt(p.Age, 10))},
 		},
 		TableName: &tableName,
 	})
-	if err := client.PutItem(tableName).Exec(&p); err != nil {
+	if err := client.Put(&p).Table(tableName).Exec(); err != nil {
 		t.Fatalf("unexpected err: %s", err)
 	}
 	ddb.done()
@@ -47,14 +47,14 @@ func TestPutItemDefaultTableName(t *testing.T) {
 		Name: "foo",
 		Age:  33,
 	}
-	ddb.MockPutItem(&dynamodb.PutItemInput{
+	ddb.MockPut(&dynamodb.PutItemInput{
 		Item: map[string]*dynamodb.AttributeValue{
 			"PK":  {S: aws.String(fmt.Sprintf("Person#%s", p.Name))},
 			"Age": {N: aws.String(strconv.FormatInt(p.Age, 10))},
 		},
 		TableName: &tableName,
 	})
-	if err := client.PutItem().Exec(&p); err != nil {
+	if err := client.Put(&p).Exec(); err != nil {
 		t.Fatalf("unexpected err: %s", err)
 	}
 	ddb.done()

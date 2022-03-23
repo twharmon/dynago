@@ -1,34 +1,39 @@
 package dynago
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 )
 
+var ErrItemNotFound = errors.New("item not found")
+
 type GetItem struct {
+	item   interface{}
 	input  *dynamodb.GetItemInput
 	dynago *Dynago
 }
 
-func (d *Dynago) GetItem(table ...string) *GetItem {
-	q := GetItem{
+func (d *Dynago) Get(item interface{}) *GetItem {
+	return &GetItem{
 		input: &dynamodb.GetItemInput{
 			ConsistentRead: &d.config.DefaultConsistentRead,
+			TableName:      &d.config.DefaultTableName,
 		},
+		item:   item,
 		dynago: d,
 	}
-	if len(table) == 0 {
-		q.input.TableName = &d.config.DefaultTableName
-	} else {
-		q.input.TableName = &table[0]
-	}
-	return &q
 }
 
-func (q *GetItem) Exec(v interface{}) error {
+func (q *GetItem) Table(name string) *GetItem {
+	q.input.TableName = &name
+	return q
+}
+
+func (q *GetItem) Exec() error {
 	var err error
-	q.input.Key, err = q.dynago.key(v)
+	q.input.Key, err = q.dynago.key(q.item)
 	if err != nil {
 		return fmt.Errorf("q.dynago.key: %w", err)
 	}
@@ -36,5 +41,8 @@ func (q *GetItem) Exec(v interface{}) error {
 	if err != nil {
 		return fmt.Errorf("d.ddb.GetItem: %w", err)
 	}
-	return q.dynago.Unmarshal(output.Item, v)
+	if output.Item == nil {
+		return ErrItemNotFound
+	}
+	return q.dynago.Unmarshal(output.Item, q.item)
 }

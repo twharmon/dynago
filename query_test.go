@@ -42,11 +42,12 @@ func TestQueryBasic(t *testing.T) {
 		},
 	})
 	var got []*Person
-	if err := client.Query(tableName).
+	if err := client.Query(&got).
+		Table(tableName).
 		ExpressionAttributeValue(":pk", fmt.Sprintf("Person#%s", want[0].Name)).
 		ExpressionAttributeValue(":bw", "Team#").
 		KeyConditionExpression("PK = :pk and begins_with(SK, :bw)").
-		Exec(&got); err != nil {
+		Exec(); err != nil {
 		t.Fatalf("unexpected err: %s", err)
 	}
 	assertEq(t, want, got)
@@ -85,11 +86,11 @@ func TestQueryDefaultTableName(t *testing.T) {
 		},
 	})
 	var got []*Person
-	if err := client.Query().
+	if err := client.Query(&got).
 		ExpressionAttributeValue(":pk", fmt.Sprintf("Person#%s", want[0].Name)).
 		ExpressionAttributeValue(":bw", "Team#").
 		KeyConditionExpression("PK = :pk and begins_with(SK, :bw)").
-		Exec(&got); err != nil {
+		Exec(); err != nil {
 		t.Fatalf("unexpected err: %s", err)
 	}
 	assertEq(t, want, got)
@@ -128,11 +129,12 @@ func TestQueryValues(t *testing.T) {
 		},
 	})
 	var got []Person
-	if err := client.Query(tableName).
+	if err := client.Query(&got).
+		Table(tableName).
 		ExpressionAttributeValue(":pk", fmt.Sprintf("Person#%s", want[0].Name)).
 		ExpressionAttributeValue(":bw", "Team#").
 		KeyConditionExpression("PK = :pk and begins_with(SK, :bw)").
-		Exec(&got); err != nil {
+		Exec(); err != nil {
 		t.Fatalf("unexpected err: %s", err)
 	}
 	assertEq(t, want, got)

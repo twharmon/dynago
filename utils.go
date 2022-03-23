@@ -141,11 +141,13 @@ func (d *Dynago) simpleMarshal(v reflect.Value, layout string) (*dynamodb.Attrib
 		val := v.Interface().(float64)
 		s := strconv.FormatFloat(val, 'f', 14, 64)
 		s = strings.TrimRight(s, "0")
+		s = strings.TrimRight(s, ".")
 		return &dynamodb.AttributeValue{N: &s}, nil
 	case reflect.Float32:
 		val := v.Interface().(float32)
 		s := strconv.FormatFloat(float64(val), 'f', 14, 32)
 		s = strings.TrimRight(s, "0")
+		s = strings.TrimRight(s, ".")
 		return &dynamodb.AttributeValue{N: &s}, nil
 	case reflect.Bool:
 		val := v.Interface().(bool)

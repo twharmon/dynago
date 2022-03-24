@@ -167,8 +167,6 @@ func (d *Dynago) simpleUnmarshal(v reflect.Value, av *dynamodb.AttributeValue, l
 		if av.BOOL != nil {
 			v.Set(reflect.ValueOf(*av.BOOL))
 		}
-	default:
-		return fmt.Errorf("type %s not supported", v.Kind())
 	}
 	return nil
 }
@@ -189,7 +187,9 @@ func (d *Dynago) simpleMarshal(v reflect.Value, layout string) (*dynamodb.Attrib
 			if err != nil {
 				return nil, fmt.Errorf("d.simpleMarshal: %w", err)
 			}
-			av.L = append(av.L, item)
+			if item != nil {
+				av.L = append(av.L, item)
+			}
 		}
 		return av, nil
 	case reflect.Struct:
@@ -257,7 +257,7 @@ func (d *Dynago) simpleMarshal(v reflect.Value, layout string) (*dynamodb.Attrib
 		val := v.Interface().(bool)
 		return &dynamodb.AttributeValue{BOOL: &val}, nil
 	default:
-		return nil, fmt.Errorf("type %s not supported", v.Kind())
+		return nil, nil
 	}
 }
 

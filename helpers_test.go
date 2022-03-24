@@ -21,6 +21,8 @@ type ddbMock struct {
 	getItemOutput   *dynamodb.GetItemOutput
 	queryInput      *dynamodb.QueryInput
 	queryOutput     *dynamodb.QueryOutput
+	scanInput       *dynamodb.ScanInput
+	scanOutput      *dynamodb.ScanOutput
 	putItemInput    *dynamodb.PutItemInput
 	deleteItemInput *dynamodb.DeleteItemInput
 	txWriteInput    *dynamodb.TransactWriteItemsInput
@@ -64,6 +66,9 @@ func (m *ddbMock) done() {
 		m.t.Fatalf("expectations not met")
 	}
 	if m.queryInput != nil {
+		m.t.Fatalf("expectations not met")
+	}
+	if m.scanInput != nil {
 		m.t.Fatalf("expectations not met")
 	}
 	if m.getItemOutput != nil {
@@ -111,6 +116,21 @@ func (m *ddbMock) Query(i *dynamodb.QueryInput) (*dynamodb.QueryOutput, error) {
 	m.queryInput = nil
 	m.queryOutput = nil
 	return &o, nil
+}
+
+func (m *ddbMock) Scan(i *dynamodb.ScanInput) (*dynamodb.ScanOutput, error) {
+	if !reflect.DeepEqual(i, m.scanInput) {
+		m.t.Fatalf("want %v; got %v", m.scanInput, i)
+	}
+	o := *m.scanOutput
+	m.scanInput = nil
+	m.scanOutput = nil
+	return &o, nil
+}
+
+func (m *ddbMock) MockScan(i *dynamodb.ScanInput, o *dynamodb.ScanOutput) {
+	m.scanInput = i
+	m.scanOutput = o
 }
 
 func (m *ddbMock) MockQuery(i *dynamodb.QueryInput, o *dynamodb.QueryOutput) {

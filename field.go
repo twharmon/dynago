@@ -45,7 +45,7 @@ func (d *Dynago) field(sf reflect.StructField, index int) (*field, error) {
 		switch kind {
 		case reflect.String:
 			f.attrType = "S"
-		case reflect.Int64, reflect.Float64:
+		case reflect.Int, reflect.Uint, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Float64, reflect.Float32:
 			f.attrType = "N"
 		case reflect.Bool:
 			f.attrType = "BOOL"

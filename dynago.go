@@ -147,7 +147,7 @@ func (d *Dynago) key(v interface{}, index ...string) (map[string]*dynamodb.Attri
 			return nil, fmt.Errorf("cache.attrVal: %w", err)
 		}
 		m[cache[i].attrName] = attrVal
-		for _, cp := range cache[i].attrsToCopy {
+		for _, cp := range cache[i].attrsToCopy { // TODO: won't work if copy to non-primary key attr
 			m[cp] = attrVal
 		}
 	}

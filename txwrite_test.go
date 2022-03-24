@@ -38,10 +38,9 @@ func TestTransactWriteItemsBasic(t *testing.T) {
 				},
 			},
 			{
-				Put: &dynamodb.Put{
-					Item: map[string]*dynamodb.AttributeValue{
-						"PK":  {S: aws.String(fmt.Sprintf("Person#%s", p2.Name))},
-						"Age": {N: aws.String(strconv.FormatInt(p2.Age, 10))},
+				Delete: &dynamodb.Delete{
+					Key: map[string]*dynamodb.AttributeValue{
+						"PK": {S: aws.String(fmt.Sprintf("Person#%s", p2.Name))},
 					},
 					TableName: &tableName,
 				},
@@ -52,7 +51,7 @@ func TestTransactWriteItemsBasic(t *testing.T) {
 	if err := client.TransactWriteItems().
 		Items(
 			client.Put(&p).Table(tableName),
-			client.Put(&p2).Table(tableName),
+			client.Delete(&p2).Table(tableName),
 		).
 		Exec(); err != nil {
 		t.Fatalf("unexpected err: %s", err)

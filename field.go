@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"reflect"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -68,6 +69,7 @@ func (d *Dynago) field(sf reflect.StructField, index int) (*field, error) {
 	}
 	if tag, ok := sf.Tag.Lookup(d.config.FmtTagName); ok {
 		f.fmt = tag
+		f.attrType = "S"
 	} else {
 		f.fmt = "{}"
 	}
@@ -123,6 +125,30 @@ func (f *field) format(v reflect.Value, fieldIndex int) *string {
 		switch val := fval.Interface().(type) {
 		case string:
 			output = strings.ReplaceAll(output, match, val)
+		case int:
+			output = strings.ReplaceAll(output, match, strconv.FormatInt(int64(val), 10))
+		case uint:
+			output = strings.ReplaceAll(output, match, strconv.FormatInt(int64(val), 10))
+		case int8:
+			output = strings.ReplaceAll(output, match, strconv.FormatInt(int64(val), 10))
+		case uint8:
+			output = strings.ReplaceAll(output, match, strconv.FormatInt(int64(val), 10))
+		case int16:
+			output = strings.ReplaceAll(output, match, strconv.FormatInt(int64(val), 10))
+		case uint16:
+			output = strings.ReplaceAll(output, match, strconv.FormatInt(int64(val), 10))
+		case int32:
+			output = strings.ReplaceAll(output, match, strconv.FormatInt(int64(val), 10))
+		case uint32:
+			output = strings.ReplaceAll(output, match, strconv.FormatInt(int64(val), 10))
+		case int64:
+			output = strings.ReplaceAll(output, match, strconv.FormatInt(val, 10))
+		case uint64:
+			output = strings.ReplaceAll(output, match, strconv.FormatInt(int64(val), 10))
+		case float32:
+			output = strings.ReplaceAll(output, match, strconv.FormatFloat(float64(val), 'f', -1, 32))
+		case float64:
+			output = strings.ReplaceAll(output, match, strconv.FormatFloat(val, 'f', -1, 64))
 		case time.Time:
 			output = strings.ReplaceAll(output, match, val.Format(f.layout))
 		}
@@ -151,6 +177,78 @@ func (f *field) parse(s string, v reflect.Value) error {
 		switch fty.Kind() {
 		case reflect.String:
 			fval.Set(reflect.ValueOf(str))
+		case reflect.Int:
+			val, err := strconv.ParseInt(str, 10, 64)
+			if err != nil {
+				return err
+			}
+			fval.Set(reflect.ValueOf(int(val)))
+		case reflect.Uint:
+			val, err := strconv.ParseInt(str, 10, 64)
+			if err != nil {
+				return err
+			}
+			fval.Set(reflect.ValueOf(uint(val)))
+		case reflect.Int8:
+			val, err := strconv.ParseInt(str, 10, 64)
+			if err != nil {
+				return err
+			}
+			fval.Set(reflect.ValueOf(int8(val)))
+		case reflect.Uint8:
+			val, err := strconv.ParseInt(str, 10, 64)
+			if err != nil {
+				return err
+			}
+			fval.Set(reflect.ValueOf(uint8(val)))
+		case reflect.Int16:
+			val, err := strconv.ParseInt(str, 10, 64)
+			if err != nil {
+				return err
+			}
+			fval.Set(reflect.ValueOf(int16(val)))
+		case reflect.Uint16:
+			val, err := strconv.ParseInt(str, 10, 64)
+			if err != nil {
+				return err
+			}
+			fval.Set(reflect.ValueOf(uint16(val)))
+		case reflect.Int32:
+			val, err := strconv.ParseInt(str, 10, 64)
+			if err != nil {
+				return err
+			}
+			fval.Set(reflect.ValueOf(int32(val)))
+		case reflect.Uint32:
+			val, err := strconv.ParseInt(str, 10, 64)
+			if err != nil {
+				return err
+			}
+			fval.Set(reflect.ValueOf(uint32(val)))
+		case reflect.Int64:
+			val, err := strconv.ParseInt(str, 10, 64)
+			if err != nil {
+				return err
+			}
+			fval.Set(reflect.ValueOf(val))
+		case reflect.Uint64:
+			val, err := strconv.ParseInt(str, 10, 64)
+			if err != nil {
+				return err
+			}
+			fval.Set(reflect.ValueOf(uint64(val)))
+		case reflect.Float32:
+			val, err := strconv.ParseFloat(str, 32)
+			if err != nil {
+				return err
+			}
+			fval.Set(reflect.ValueOf(float32(val)))
+		case reflect.Float64:
+			val, err := strconv.ParseFloat(str, 64)
+			if err != nil {
+				return err
+			}
+			fval.Set(reflect.ValueOf(val))
 		case reflect.Struct:
 			switch fty {
 			case timeType:

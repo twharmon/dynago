@@ -153,8 +153,6 @@ type Event struct {
 ```
 
 ## Todo
-- format types
-	- numbers
 - query builder
 	- scan
 	- update

@@ -40,6 +40,10 @@ type Config struct {
 	// which other attributes should have same value.
 	AttrsToCopyTagName string
 
+	// AttrsToCopyIndexTagName specifies which tag is used to
+	// determine which other attributes should have same index.
+	AttrsToCopyIndexTagName string
+
 	// AdditionalAttrs can be added for each dynamodb item.
 	AdditionalAttrs func(map[string]*dynamodb.AttributeValue, reflect.Value)
 
@@ -64,6 +68,9 @@ func New(ddb dynamodbiface.DynamoDBAPI, config ...*Config) *Dynago {
 	}
 	if d.config.AttrsToCopyTagName == "" {
 		d.config.AttrsToCopyTagName = "copy"
+	}
+	if d.config.AttrsToCopyIndexTagName == "" {
+		d.config.AttrsToCopyIndexTagName = "copyidx"
 	}
 	if d.config.FmtTagName == "" {
 		d.config.FmtTagName = "fmt"
@@ -117,6 +124,9 @@ func (d *Dynago) Marshal(v interface{}) (map[string]*dynamodb.AttributeValue, er
 		for _, cp := range cache[i].attrsToCopy {
 			m[cp] = attrVal
 		}
+		if cache[i].attrToCopyIdx != "" {
+			m[cache[i].attrToCopyIdx] = attrVal
+		}
 	}
 	if d.config.AdditionalAttrs != nil {
 		d.config.AdditionalAttrs(m, val)
@@ -124,19 +134,15 @@ func (d *Dynago) Marshal(v interface{}) (map[string]*dynamodb.AttributeValue, er
 	return m, nil
 }
 
-func (d *Dynago) key(v interface{}, index ...string) (map[string]*dynamodb.AttributeValue, error) {
+func (d *Dynago) key(v interface{}) (map[string]*dynamodb.AttributeValue, error) {
 	m := make(map[string]*dynamodb.AttributeValue)
 	ty, val := tyVal(v)
 	cache, err := d.cachedStruct(ty)
 	if err != nil {
 		return nil, fmt.Errorf("d.cachedStruct: %w", err)
 	}
-	idx := "primary"
-	if len(index) > 0 {
-		idx = index[0]
-	}
 	for i := 0; i < ty.NumField(); i++ {
-		if cache[i].tableIndex != idx {
+		if cache[i].tableIndex != "primary" {
 			continue
 		}
 		if cache[i].attrName == "-" {
@@ -147,8 +153,8 @@ func (d *Dynago) key(v interface{}, index ...string) (map[string]*dynamodb.Attri
 			return nil, fmt.Errorf("cache.attrVal: %w", err)
 		}
 		m[cache[i].attrName] = attrVal
-		for _, cp := range cache[i].attrsToCopy { // TODO: won't work if copy to non-primary key attr
-			m[cp] = attrVal
+		if cache[i].attrToCopyIdx != "" {
+			m[cache[i].attrToCopyIdx] = attrVal
 		}
 	}
 	return m, nil

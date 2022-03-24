@@ -26,6 +26,11 @@ func (i *TransactionWriteItem) Items(items ...TransactionWriteItemer) *Transacti
 	return i
 }
 
+func (i *TransactionWriteItem) ClientRequestToken(token string) *TransactionWriteItem {
+	i.input.ClientRequestToken = &token
+	return i
+}
+
 func (i *TransactionWriteItem) Exec() error {
 	for _, item := range i.items {
 		txitem, err := item.TransactionWriteItem()

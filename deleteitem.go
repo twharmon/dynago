@@ -22,8 +22,29 @@ func (d *Dynago) Delete(item interface{}) *DeleteItem {
 	}
 }
 
-func (q *DeleteItem) Table(name string) *DeleteItem {
+func (q *DeleteItem) TableName(name string) *DeleteItem {
 	q.input.TableName = &name
+	return q
+}
+
+func (q *DeleteItem) ExpressionAttributeValue(key string, val interface{}) *DeleteItem {
+	if q.input.ExpressionAttributeValues == nil {
+		q.input.ExpressionAttributeValues = make(map[string]*dynamodb.AttributeValue)
+	}
+	expressionAttributeValue(q.input.ExpressionAttributeValues, key, val)
+	return q
+}
+
+func (q *DeleteItem) ConditionExpression(exp string) *DeleteItem {
+	q.input.ConditionExpression = &exp
+	return q
+}
+
+func (q *DeleteItem) ExpressionAttributeName(name string, sub string) *DeleteItem {
+	if q.input.ExpressionAttributeNames == nil {
+		q.input.ExpressionAttributeNames = make(map[string]*string)
+	}
+	q.input.ExpressionAttributeNames[name] = &sub
 	return q
 }
 

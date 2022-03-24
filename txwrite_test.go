@@ -50,9 +50,60 @@ func TestTransactWriteItemsBasic(t *testing.T) {
 
 	if err := client.TransactWriteItems().
 		Items(
-			client.Put(&p).Table(tableName),
-			client.Delete(&p2).Table(tableName),
+			client.Put(&p).TableName(tableName),
+			client.Delete(&p2).TableName(tableName),
 		).
+		Exec(); err != nil {
+		t.Fatalf("unexpected err: %s", err)
+	}
+	ddb.done()
+}
+
+func TestTransactWriteItemsClientReqTok(t *testing.T) {
+	ddb := mock(t)
+	client := dynago.New(ddb)
+	type Person struct {
+		Name string `idx:"primary" attr:"PK" fmt:"Person#{}"`
+		Age  int64
+	}
+	p := Person{
+		Name: "foo",
+		Age:  33,
+	}
+	p2 := Person{
+		Name: "bar",
+		Age:  34,
+	}
+	tableName := "bar"
+	ddb.MockTransactWriteItems(&dynamodb.TransactWriteItemsInput{
+		ClientRequestToken: aws.String("foo"),
+		TransactItems: []*dynamodb.TransactWriteItem{
+			{
+				Put: &dynamodb.Put{
+					Item: map[string]*dynamodb.AttributeValue{
+						"PK":  {S: aws.String(fmt.Sprintf("Person#%s", p.Name))},
+						"Age": {N: aws.String(strconv.FormatInt(p.Age, 10))},
+					},
+					TableName: &tableName,
+				},
+			},
+			{
+				Delete: &dynamodb.Delete{
+					Key: map[string]*dynamodb.AttributeValue{
+						"PK": {S: aws.String(fmt.Sprintf("Person#%s", p2.Name))},
+					},
+					TableName: &tableName,
+				},
+			},
+		},
+	})
+
+	if err := client.TransactWriteItems().
+		Items(
+			client.Put(&p).TableName(tableName),
+			client.Delete(&p2).TableName(tableName),
+		).
+		ClientRequestToken("foo").
 		Exec(); err != nil {
 		t.Fatalf("unexpected err: %s", err)
 	}

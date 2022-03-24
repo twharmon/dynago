@@ -20,8 +20,29 @@ func (d *Dynago) Put(item interface{}) *PutItem {
 	}
 }
 
-func (q *PutItem) Table(table string) *PutItem {
+func (q *PutItem) TableName(table string) *PutItem {
 	q.input.TableName = &table
+	return q
+}
+
+func (q *PutItem) ConditionExpression(exp string) *PutItem {
+	q.input.ConditionExpression = &exp
+	return q
+}
+
+func (q *PutItem) ExpressionAttributeValue(key string, val interface{}) *PutItem {
+	if q.input.ExpressionAttributeValues == nil {
+		q.input.ExpressionAttributeValues = make(map[string]*dynamodb.AttributeValue)
+	}
+	expressionAttributeValue(q.input.ExpressionAttributeValues, key, val)
+	return q
+}
+
+func (q *PutItem) ExpressionAttributeName(name string, sub string) *PutItem {
+	if q.input.ExpressionAttributeNames == nil {
+		q.input.ExpressionAttributeNames = make(map[string]*string)
+	}
+	q.input.ExpressionAttributeNames[name] = &sub
 	return q
 }
 

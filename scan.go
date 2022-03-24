@@ -8,15 +8,15 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 )
 
-type Query struct {
-	input  *dynamodb.QueryInput
+type Scan struct {
+	input  *dynamodb.ScanInput
 	dynago *Dynago
 	items  interface{}
 }
 
-func (d *Dynago) Query(items interface{}) *Query {
-	return &Query{
-		input: &dynamodb.QueryInput{
+func (d *Dynago) Scan(items interface{}) *Scan {
+	return &Scan{
+		input: &dynamodb.ScanInput{
 			ConsistentRead: &d.config.DefaultConsistentRead,
 			TableName:      &d.config.DefaultTableName,
 		},
@@ -25,57 +25,57 @@ func (d *Dynago) Query(items interface{}) *Query {
 	}
 }
 
-func (q *Query) TableName(name string) *Query {
+func (q *Scan) TableName(name string) *Scan {
 	q.input.TableName = &name
 	return q
 }
 
-func (q *Query) IndexName(index string) *Query {
+func (q *Scan) Segment(segment int64) *Scan {
+	q.input.Segment = &segment
+	return q
+}
+
+func (q *Scan) TotalSegments(segments int64) *Scan {
+	q.input.TotalSegments = &segments
+	return q
+}
+
+func (q *Scan) IndexName(index string) *Scan {
 	q.input.IndexName = &index
 	return q
 }
 
-func (q *Query) Select(attrs string) *Query {
+func (q *Scan) Select(attrs string) *Scan {
 	q.input.Select = &attrs
 	return q
 }
 
-func (q *Query) Limit(limit int64) *Query {
+func (q *Scan) Limit(limit int64) *Scan {
 	q.input.Limit = &limit
 	return q
 }
 
-func (q *Query) ProjectionExpression(exp string) *Query {
+func (q *Scan) ProjectionExpression(exp string) *Scan {
 	q.input.ProjectionExpression = &exp
 	return q
 }
 
-func (q *Query) FilterExpression(exp string) *Query {
+func (q *Scan) FilterExpression(exp string) *Scan {
 	q.input.FilterExpression = &exp
 	return q
 }
 
-func (q *Query) ExclusiveStartKey(key map[string]*dynamodb.AttributeValue) *Query {
+func (q *Scan) ExclusiveStartKey(key map[string]*dynamodb.AttributeValue) *Scan {
 	q.input.ExclusiveStartKey = key
 	return q
 }
 
-func (q *Query) ScanIndexForward(val bool) *Query {
-	q.input.ScanIndexForward = &val
-	return q
-}
-
-func (q *Query) ConsistentRead(val bool) *Query {
+func (q *Scan) ConsistentRead(val bool) *Scan {
 	q.input.ConsistentRead = &val
 	return q
 }
 
-func (q *Query) KeyConditionExpression(exp string) *Query {
-	q.input.KeyConditionExpression = &exp
-	return q
-}
-
-func (q *Query) ExpressionAttributeValue(key string, val interface{}) *Query {
+func (q *Scan) ExpressionAttributeValue(key string, val interface{}) *Scan {
 	if q.input.ExpressionAttributeValues == nil {
 		q.input.ExpressionAttributeValues = make(map[string]*dynamodb.AttributeValue)
 	}
@@ -83,7 +83,7 @@ func (q *Query) ExpressionAttributeValue(key string, val interface{}) *Query {
 	return q
 }
 
-func (q *Query) ExpressionAttributeName(name string, sub string) *Query {
+func (q *Scan) ExpressionAttributeName(name string, sub string) *Scan {
 	if q.input.ExpressionAttributeNames == nil {
 		q.input.ExpressionAttributeNames = make(map[string]*string)
 	}
@@ -91,16 +91,16 @@ func (q *Query) ExpressionAttributeName(name string, sub string) *Query {
 	return q
 }
 
-func (q *Query) Exec() error {
+func (q *Scan) Exec() error {
 	rv := reflect.ValueOf(q.items)
 	if rv.Kind() != reflect.Pointer {
-		return errors.New("dynago: dynago.Query.Exec: v must be pointer")
+		return errors.New("dynago: dynago.Scan.Exec: v must be pointer")
 	}
 	for rv.Kind() == reflect.Pointer {
 		rv = reflect.Indirect(rv)
 	}
 	var err error
-	output, err := q.dynago.ddb.Query(q.input)
+	output, err := q.dynago.ddb.Scan(q.input)
 	if err != nil {
 		return fmt.Errorf("d.ddb.GetItem: %w", err)
 	}
@@ -115,7 +115,7 @@ func (q *Query) Exec() error {
 		indirect = false
 	}
 	if ft.Kind() == reflect.Pointer {
-		return errors.New("dynago: dynago.Query.Exec: elements of v can not be pointers to pointers")
+		return errors.New("dynago: dynago.Scan.Exec: elements of v can not be pointers to pointers")
 	}
 	s := reflect.MakeSlice(rt, len(output.Items), len(output.Items))
 	for i, item := range output.Items {

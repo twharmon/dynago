@@ -26,8 +26,26 @@ func (d *Dynago) Get(item interface{}) *GetItem {
 	}
 }
 
-func (q *GetItem) Table(name string) *GetItem {
+func (q *GetItem) TableName(name string) *GetItem {
 	q.input.TableName = &name
+	return q
+}
+
+func (q *GetItem) ProjectionExpression(exp string) *GetItem {
+	q.input.ProjectionExpression = &exp
+	return q
+}
+
+func (q *GetItem) ExpressionAttributeName(name string, sub string) *GetItem {
+	if q.input.ExpressionAttributeNames == nil {
+		q.input.ExpressionAttributeNames = make(map[string]*string)
+	}
+	q.input.ExpressionAttributeNames[name] = &sub
+	return q
+}
+
+func (q *GetItem) ConsistentRead(consisten bool) *GetItem {
+	q.input.ConsistentRead = &consisten
 	return q
 }
 

@@ -99,9 +99,12 @@ type Post struct {
 }
 
 type Author struct {
-	// Copy same value to attribute SK by using `copy:"SK"` in tag.
-	ID   string `idx:"primary" attr:"PK" fmt:"Author#{}" copy:"SK"`
-	Name string
+	// Copy same value to attribute SK by using `copyidx:"SK"` in tag,
+	// while also specifying that SK is part of the same index.
+	ID   string `idx:"primary" attr:"PK" fmt:"Author#{}" copyidx:"SK"`
+
+	// Copy same value to attribute AltName by using `copy:"AltName"` in tag.
+	Name string `copy:"AltName"`
 }
 
 func main() {

@@ -14,15 +14,16 @@ var timeType = reflect.TypeOf(time.Time{})
 var fmtRegExp = regexp.MustCompile(`\{([A-Z]?[a-zA-Z0-9_]*)\}`)
 
 type field struct {
-	attrName    string
-	attrType    string
-	fmt         string
-	fmtRegExps  map[string]*regexp.Regexp
-	layout      string
-	index       int
-	attrsToCopy []string
-	tableIndex  string
-	client      *Dynago
+	attrName      string
+	attrType      string
+	fmt           string
+	fmtRegExps    map[string]*regexp.Regexp
+	layout        string
+	index         int
+	attrsToCopy   []string
+	attrToCopyIdx string
+	tableIndex    string
+	client        *Dynago
 }
 
 func (d *Dynago) field(sf reflect.StructField, index int) (*field, error) {
@@ -100,6 +101,9 @@ func (d *Dynago) field(sf reflect.StructField, index int) (*field, error) {
 	}
 	if tag, ok := sf.Tag.Lookup(d.config.AttrsToCopyTagName); ok {
 		f.attrsToCopy = strings.Split(tag, ",")
+	}
+	if tag, ok := sf.Tag.Lookup(d.config.AttrsToCopyIndexTagName); ok {
+		f.attrToCopyIdx = tag
 	}
 	return &f, nil
 }

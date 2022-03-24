@@ -155,9 +155,6 @@ type Event struct {
 ## Todo
 - format types
 	- numbers
-- types
-	- Go maps
-	- Sets
 - query builder
 	- scan
 	- update

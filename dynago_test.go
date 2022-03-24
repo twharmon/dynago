@@ -988,6 +988,41 @@ func TestUnmarshalBool(t *testing.T) {
 	}
 	assertEq(t, want, got)
 }
+func TestMarshalSet(t *testing.T) {
+	type Person struct {
+		Tags []string `type:"SS"`
+	}
+	p := Person{
+		Tags: []string{"a", "b"},
+	}
+	want := map[string]*dynamodb.AttributeValue{
+		"Tags": {SS: []*string{aws.String("a"), aws.String("b")}},
+	}
+	client := dynago.New(nil)
+	got, err := client.Marshal(&p)
+	if err != nil {
+		t.Fatalf("unexpected err: %s", err)
+	}
+	assertEq(t, want, got)
+}
+
+func TestUnmarshalSet(t *testing.T) {
+	type Person struct {
+		Tags []string `type:"SS"`
+	}
+	want := Person{
+		Tags: []string{"a", "b"},
+	}
+	item := map[string]*dynamodb.AttributeValue{
+		"Tags": {SS: []*string{aws.String("a"), aws.String("b")}},
+	}
+	client := dynago.New(nil)
+	var got Person
+	if err := client.Unmarshal(item, &got); err != nil {
+		t.Fatalf("unexpected err: %s", err)
+	}
+	assertEq(t, want, got)
+}
 
 func TestMarshalTimeNoLayoutTag(t *testing.T) {
 	type Person struct {

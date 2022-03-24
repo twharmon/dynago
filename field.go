@@ -173,6 +173,13 @@ func (f *field) attrVal(v reflect.Value) (*dynamodb.AttributeValue, error) {
 	switch f.attrType {
 	case "S":
 		return &dynamodb.AttributeValue{S: f.format(v, f.index)}, nil
+	case "SS":
+		av := &dynamodb.AttributeValue{}
+		ss := fv.Interface().([]string)
+		for i := range ss {
+			av.SS = append(av.SS, &ss[i])
+		}
+		return av, nil
 	}
 	return f.client.simpleMarshal(fv, f.layout)
 }
@@ -191,6 +198,15 @@ func (f *field) unmarshal(item map[string]*dynamodb.AttributeValue, v reflect.Va
 			if err := f.parse(*item[f.attrName].S, v); err != nil {
 				return fmt.Errorf("parse: %s", err)
 			}
+		}
+	case "SS":
+		if item[f.attrName] != nil && item[f.attrName].SS != nil {
+			ssptr := item[f.attrName].SS
+			var ss []string
+			for i := range ssptr {
+				ss = append(ss, *ssptr[i])
+			}
+			fv.Set(reflect.ValueOf(ss))
 		}
 	default:
 		return f.client.simpleUnmarshal(fv, item[f.attrName], f.layout)

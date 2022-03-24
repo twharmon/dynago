@@ -120,6 +120,9 @@ func (d *Dynago) Marshal(v interface{}) (map[string]*dynamodb.AttributeValue, er
 		if err != nil {
 			return nil, fmt.Errorf("cache.attrVal: %w", err)
 		}
+		if attrVal == nil {
+			continue
+		}
 		m[cache[i].attrName] = attrVal
 		for _, cp := range cache[i].attrsToCopy {
 			m[cp] = attrVal
@@ -151,6 +154,9 @@ func (d *Dynago) key(v interface{}) (map[string]*dynamodb.AttributeValue, error)
 		attrVal, err := cache[i].attrVal(val)
 		if err != nil {
 			return nil, fmt.Errorf("cache.attrVal: %w", err)
+		}
+		if attrVal == nil {
+			continue
 		}
 		m[cache[i].attrName] = attrVal
 		if cache[i].attrToCopyIdx != "" {

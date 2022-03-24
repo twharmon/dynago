@@ -59,7 +59,7 @@ func (q *GetItem) Exec() error {
 	if err != nil {
 		return fmt.Errorf("d.ddb.GetItem: %w", err)
 	}
-	if output.Item == nil {
+	if len(output.Item) == 0 {
 		return ErrItemNotFound
 	}
 	return q.dynago.Unmarshal(output.Item, q.item)

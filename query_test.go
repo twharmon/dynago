@@ -140,3 +140,495 @@ func TestQueryValues(t *testing.T) {
 	assertEq(t, want, got)
 	ddb.done()
 }
+
+func TestExpInt(t *testing.T) {
+	ddb := mock(t)
+	client := dynago.New(ddb)
+	type Person struct {
+		Name string `idx:"primary" attr:"PK" fmt:"Person#{}"`
+		Age  int    `idx:"primary" attr:"SK"`
+	}
+	want := []*Person{{
+		Name: "foo",
+		Age:  33,
+	}}
+	tableName := "baz"
+	ddb.MockQuery(&dynamodb.QueryInput{
+		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
+			":pk":  {S: aws.String(fmt.Sprintf("Person#%s", want[0].Name))},
+			":age": {N: aws.String(strconv.FormatInt(int64(want[0].Age), 10))},
+		},
+		KeyConditionExpression: aws.String("PK = :pk and SK > :age"),
+		TableName:              &tableName,
+		ConsistentRead:         aws.Bool(false),
+	}, &dynamodb.QueryOutput{
+		Items: []map[string]*dynamodb.AttributeValue{
+			{
+				"PK": {S: aws.String(fmt.Sprintf("Person#%s", want[0].Name))},
+				"SK": {N: aws.String(strconv.FormatInt(int64(want[0].Age), 10))},
+			},
+		},
+	})
+	var got []*Person
+	if err := client.Query(&got).
+		Table(tableName).
+		ExpressionAttributeValue(":pk", fmt.Sprintf("Person#%s", want[0].Name)).
+		ExpressionAttributeValue(":age", want[0].Age).
+		KeyConditionExpression("PK = :pk and SK > :age").
+		Exec(); err != nil {
+		t.Fatalf("unexpected err: %s", err)
+	}
+	assertEq(t, want, got)
+	ddb.done()
+}
+
+func TestExpUint(t *testing.T) {
+	ddb := mock(t)
+	client := dynago.New(ddb)
+	type Person struct {
+		Name string `idx:"primary" attr:"PK" fmt:"Person#{}"`
+		Age  uint   `idx:"primary" attr:"SK"`
+	}
+	want := []*Person{{
+		Name: "foo",
+		Age:  33,
+	}}
+	tableName := "baz"
+	ddb.MockQuery(&dynamodb.QueryInput{
+		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
+			":pk":  {S: aws.String(fmt.Sprintf("Person#%s", want[0].Name))},
+			":age": {N: aws.String(strconv.FormatInt(int64(want[0].Age), 10))},
+		},
+		KeyConditionExpression: aws.String("PK = :pk and SK > :age"),
+		TableName:              &tableName,
+		ConsistentRead:         aws.Bool(false),
+	}, &dynamodb.QueryOutput{
+		Items: []map[string]*dynamodb.AttributeValue{
+			{
+				"PK": {S: aws.String(fmt.Sprintf("Person#%s", want[0].Name))},
+				"SK": {N: aws.String(strconv.FormatInt(int64(want[0].Age), 10))},
+			},
+		},
+	})
+	var got []*Person
+	if err := client.Query(&got).
+		Table(tableName).
+		ExpressionAttributeValue(":pk", fmt.Sprintf("Person#%s", want[0].Name)).
+		ExpressionAttributeValue(":age", want[0].Age).
+		KeyConditionExpression("PK = :pk and SK > :age").
+		Exec(); err != nil {
+		t.Fatalf("unexpected err: %s", err)
+	}
+	assertEq(t, want, got)
+	ddb.done()
+}
+
+func TestExpInt8(t *testing.T) {
+	ddb := mock(t)
+	client := dynago.New(ddb)
+	type Person struct {
+		Name string `idx:"primary" attr:"PK" fmt:"Person#{}"`
+		Age  int8   `idx:"primary" attr:"SK"`
+	}
+	want := []*Person{{
+		Name: "foo",
+		Age:  33,
+	}}
+	tableName := "baz"
+	ddb.MockQuery(&dynamodb.QueryInput{
+		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
+			":pk":  {S: aws.String(fmt.Sprintf("Person#%s", want[0].Name))},
+			":age": {N: aws.String(strconv.FormatInt(int64(want[0].Age), 10))},
+		},
+		KeyConditionExpression: aws.String("PK = :pk and SK > :age"),
+		TableName:              &tableName,
+		ConsistentRead:         aws.Bool(false),
+	}, &dynamodb.QueryOutput{
+		Items: []map[string]*dynamodb.AttributeValue{
+			{
+				"PK": {S: aws.String(fmt.Sprintf("Person#%s", want[0].Name))},
+				"SK": {N: aws.String(strconv.FormatInt(int64(want[0].Age), 10))},
+			},
+		},
+	})
+	var got []*Person
+	if err := client.Query(&got).
+		Table(tableName).
+		ExpressionAttributeValue(":pk", fmt.Sprintf("Person#%s", want[0].Name)).
+		ExpressionAttributeValue(":age", want[0].Age).
+		KeyConditionExpression("PK = :pk and SK > :age").
+		Exec(); err != nil {
+		t.Fatalf("unexpected err: %s", err)
+	}
+	assertEq(t, want, got)
+	ddb.done()
+}
+
+func TestExpUint8(t *testing.T) {
+	ddb := mock(t)
+	client := dynago.New(ddb)
+	type Person struct {
+		Name string `idx:"primary" attr:"PK" fmt:"Person#{}"`
+		Age  uint8  `idx:"primary" attr:"SK"`
+	}
+	want := []*Person{{
+		Name: "foo",
+		Age:  33,
+	}}
+	tableName := "baz"
+	ddb.MockQuery(&dynamodb.QueryInput{
+		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
+			":pk":  {S: aws.String(fmt.Sprintf("Person#%s", want[0].Name))},
+			":age": {N: aws.String(strconv.FormatInt(int64(want[0].Age), 10))},
+		},
+		KeyConditionExpression: aws.String("PK = :pk and SK > :age"),
+		TableName:              &tableName,
+		ConsistentRead:         aws.Bool(false),
+	}, &dynamodb.QueryOutput{
+		Items: []map[string]*dynamodb.AttributeValue{
+			{
+				"PK": {S: aws.String(fmt.Sprintf("Person#%s", want[0].Name))},
+				"SK": {N: aws.String(strconv.FormatInt(int64(want[0].Age), 10))},
+			},
+		},
+	})
+	var got []*Person
+	if err := client.Query(&got).
+		Table(tableName).
+		ExpressionAttributeValue(":pk", fmt.Sprintf("Person#%s", want[0].Name)).
+		ExpressionAttributeValue(":age", want[0].Age).
+		KeyConditionExpression("PK = :pk and SK > :age").
+		Exec(); err != nil {
+		t.Fatalf("unexpected err: %s", err)
+	}
+	assertEq(t, want, got)
+	ddb.done()
+}
+
+func TestExpInt16(t *testing.T) {
+	ddb := mock(t)
+	client := dynago.New(ddb)
+	type Person struct {
+		Name string `idx:"primary" attr:"PK" fmt:"Person#{}"`
+		Age  int16  `idx:"primary" attr:"SK"`
+	}
+	want := []*Person{{
+		Name: "foo",
+		Age:  33,
+	}}
+	tableName := "baz"
+	ddb.MockQuery(&dynamodb.QueryInput{
+		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
+			":pk":  {S: aws.String(fmt.Sprintf("Person#%s", want[0].Name))},
+			":age": {N: aws.String(strconv.FormatInt(int64(want[0].Age), 10))},
+		},
+		KeyConditionExpression: aws.String("PK = :pk and SK > :age"),
+		TableName:              &tableName,
+		ConsistentRead:         aws.Bool(false),
+	}, &dynamodb.QueryOutput{
+		Items: []map[string]*dynamodb.AttributeValue{
+			{
+				"PK": {S: aws.String(fmt.Sprintf("Person#%s", want[0].Name))},
+				"SK": {N: aws.String(strconv.FormatInt(int64(want[0].Age), 10))},
+			},
+		},
+	})
+	var got []*Person
+	if err := client.Query(&got).
+		Table(tableName).
+		ExpressionAttributeValue(":pk", fmt.Sprintf("Person#%s", want[0].Name)).
+		ExpressionAttributeValue(":age", want[0].Age).
+		KeyConditionExpression("PK = :pk and SK > :age").
+		Exec(); err != nil {
+		t.Fatalf("unexpected err: %s", err)
+	}
+	assertEq(t, want, got)
+	ddb.done()
+}
+
+func TestExpUint16(t *testing.T) {
+	ddb := mock(t)
+	client := dynago.New(ddb)
+	type Person struct {
+		Name string `idx:"primary" attr:"PK" fmt:"Person#{}"`
+		Age  uint16 `idx:"primary" attr:"SK"`
+	}
+	want := []*Person{{
+		Name: "foo",
+		Age:  33,
+	}}
+	tableName := "baz"
+	ddb.MockQuery(&dynamodb.QueryInput{
+		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
+			":pk":  {S: aws.String(fmt.Sprintf("Person#%s", want[0].Name))},
+			":age": {N: aws.String(strconv.FormatInt(int64(want[0].Age), 10))},
+		},
+		KeyConditionExpression: aws.String("PK = :pk and SK > :age"),
+		TableName:              &tableName,
+		ConsistentRead:         aws.Bool(false),
+	}, &dynamodb.QueryOutput{
+		Items: []map[string]*dynamodb.AttributeValue{
+			{
+				"PK": {S: aws.String(fmt.Sprintf("Person#%s", want[0].Name))},
+				"SK": {N: aws.String(strconv.FormatInt(int64(want[0].Age), 10))},
+			},
+		},
+	})
+	var got []*Person
+	if err := client.Query(&got).
+		Table(tableName).
+		ExpressionAttributeValue(":pk", fmt.Sprintf("Person#%s", want[0].Name)).
+		ExpressionAttributeValue(":age", want[0].Age).
+		KeyConditionExpression("PK = :pk and SK > :age").
+		Exec(); err != nil {
+		t.Fatalf("unexpected err: %s", err)
+	}
+	assertEq(t, want, got)
+	ddb.done()
+}
+
+func TestExpInt32(t *testing.T) {
+	ddb := mock(t)
+	client := dynago.New(ddb)
+	type Person struct {
+		Name string `idx:"primary" attr:"PK" fmt:"Person#{}"`
+		Age  int32  `idx:"primary" attr:"SK"`
+	}
+	want := []*Person{{
+		Name: "foo",
+		Age:  33,
+	}}
+	tableName := "baz"
+	ddb.MockQuery(&dynamodb.QueryInput{
+		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
+			":pk":  {S: aws.String(fmt.Sprintf("Person#%s", want[0].Name))},
+			":age": {N: aws.String(strconv.FormatInt(int64(want[0].Age), 10))},
+		},
+		KeyConditionExpression: aws.String("PK = :pk and SK > :age"),
+		TableName:              &tableName,
+		ConsistentRead:         aws.Bool(false),
+	}, &dynamodb.QueryOutput{
+		Items: []map[string]*dynamodb.AttributeValue{
+			{
+				"PK": {S: aws.String(fmt.Sprintf("Person#%s", want[0].Name))},
+				"SK": {N: aws.String(strconv.FormatInt(int64(want[0].Age), 10))},
+			},
+		},
+	})
+	var got []*Person
+	if err := client.Query(&got).
+		Table(tableName).
+		ExpressionAttributeValue(":pk", fmt.Sprintf("Person#%s", want[0].Name)).
+		ExpressionAttributeValue(":age", want[0].Age).
+		KeyConditionExpression("PK = :pk and SK > :age").
+		Exec(); err != nil {
+		t.Fatalf("unexpected err: %s", err)
+	}
+	assertEq(t, want, got)
+	ddb.done()
+}
+
+func TestExpUint32(t *testing.T) {
+	ddb := mock(t)
+	client := dynago.New(ddb)
+	type Person struct {
+		Name string `idx:"primary" attr:"PK" fmt:"Person#{}"`
+		Age  uint32 `idx:"primary" attr:"SK"`
+	}
+	want := []*Person{{
+		Name: "foo",
+		Age:  33,
+	}}
+	tableName := "baz"
+	ddb.MockQuery(&dynamodb.QueryInput{
+		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
+			":pk":  {S: aws.String(fmt.Sprintf("Person#%s", want[0].Name))},
+			":age": {N: aws.String(strconv.FormatInt(int64(want[0].Age), 10))},
+		},
+		KeyConditionExpression: aws.String("PK = :pk and SK > :age"),
+		TableName:              &tableName,
+		ConsistentRead:         aws.Bool(false),
+	}, &dynamodb.QueryOutput{
+		Items: []map[string]*dynamodb.AttributeValue{
+			{
+				"PK": {S: aws.String(fmt.Sprintf("Person#%s", want[0].Name))},
+				"SK": {N: aws.String(strconv.FormatInt(int64(want[0].Age), 10))},
+			},
+		},
+	})
+	var got []*Person
+	if err := client.Query(&got).
+		Table(tableName).
+		ExpressionAttributeValue(":pk", fmt.Sprintf("Person#%s", want[0].Name)).
+		ExpressionAttributeValue(":age", want[0].Age).
+		KeyConditionExpression("PK = :pk and SK > :age").
+		Exec(); err != nil {
+		t.Fatalf("unexpected err: %s", err)
+	}
+	assertEq(t, want, got)
+	ddb.done()
+}
+
+func TestExpInt64(t *testing.T) {
+	ddb := mock(t)
+	client := dynago.New(ddb)
+	type Person struct {
+		Name string `idx:"primary" attr:"PK" fmt:"Person#{}"`
+		Age  int64  `idx:"primary" attr:"SK"`
+	}
+	want := []*Person{{
+		Name: "foo",
+		Age:  33,
+	}}
+	tableName := "baz"
+	ddb.MockQuery(&dynamodb.QueryInput{
+		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
+			":pk":  {S: aws.String(fmt.Sprintf("Person#%s", want[0].Name))},
+			":age": {N: aws.String(strconv.FormatInt(int64(want[0].Age), 10))},
+		},
+		KeyConditionExpression: aws.String("PK = :pk and SK > :age"),
+		TableName:              &tableName,
+		ConsistentRead:         aws.Bool(false),
+	}, &dynamodb.QueryOutput{
+		Items: []map[string]*dynamodb.AttributeValue{
+			{
+				"PK": {S: aws.String(fmt.Sprintf("Person#%s", want[0].Name))},
+				"SK": {N: aws.String(strconv.FormatInt(int64(want[0].Age), 10))},
+			},
+		},
+	})
+	var got []*Person
+	if err := client.Query(&got).
+		Table(tableName).
+		ExpressionAttributeValue(":pk", fmt.Sprintf("Person#%s", want[0].Name)).
+		ExpressionAttributeValue(":age", want[0].Age).
+		KeyConditionExpression("PK = :pk and SK > :age").
+		Exec(); err != nil {
+		t.Fatalf("unexpected err: %s", err)
+	}
+	assertEq(t, want, got)
+	ddb.done()
+}
+
+func TestExpUint64(t *testing.T) {
+	ddb := mock(t)
+	client := dynago.New(ddb)
+	type Person struct {
+		Name string `idx:"primary" attr:"PK" fmt:"Person#{}"`
+		Age  uint64 `idx:"primary" attr:"SK"`
+	}
+	want := []*Person{{
+		Name: "foo",
+		Age:  33,
+	}}
+	tableName := "baz"
+	ddb.MockQuery(&dynamodb.QueryInput{
+		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
+			":pk":  {S: aws.String(fmt.Sprintf("Person#%s", want[0].Name))},
+			":age": {N: aws.String(strconv.FormatInt(int64(want[0].Age), 10))},
+		},
+		KeyConditionExpression: aws.String("PK = :pk and SK > :age"),
+		TableName:              &tableName,
+		ConsistentRead:         aws.Bool(false),
+	}, &dynamodb.QueryOutput{
+		Items: []map[string]*dynamodb.AttributeValue{
+			{
+				"PK": {S: aws.String(fmt.Sprintf("Person#%s", want[0].Name))},
+				"SK": {N: aws.String(strconv.FormatInt(int64(want[0].Age), 10))},
+			},
+		},
+	})
+	var got []*Person
+	if err := client.Query(&got).
+		Table(tableName).
+		ExpressionAttributeValue(":pk", fmt.Sprintf("Person#%s", want[0].Name)).
+		ExpressionAttributeValue(":age", want[0].Age).
+		KeyConditionExpression("PK = :pk and SK > :age").
+		Exec(); err != nil {
+		t.Fatalf("unexpected err: %s", err)
+	}
+	assertEq(t, want, got)
+	ddb.done()
+}
+
+func TestExpFloat32(t *testing.T) {
+	ddb := mock(t)
+	client := dynago.New(ddb)
+	type Person struct {
+		Name string  `idx:"primary" attr:"PK" fmt:"Person#{}"`
+		Age  float32 `idx:"primary" attr:"SK"`
+	}
+	want := []*Person{{
+		Name: "foo",
+		Age:  33,
+	}}
+	tableName := "baz"
+	ddb.MockQuery(&dynamodb.QueryInput{
+		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
+			":pk":  {S: aws.String(fmt.Sprintf("Person#%s", want[0].Name))},
+			":age": {N: aws.String(strconv.FormatFloat(float64(want[0].Age), 'f', -1, 32))},
+		},
+		KeyConditionExpression: aws.String("PK = :pk and SK > :age"),
+		TableName:              &tableName,
+		ConsistentRead:         aws.Bool(false),
+	}, &dynamodb.QueryOutput{
+		Items: []map[string]*dynamodb.AttributeValue{
+			{
+				"PK": {S: aws.String(fmt.Sprintf("Person#%s", want[0].Name))},
+				"SK": {N: aws.String(strconv.FormatFloat(float64(want[0].Age), 'f', -1, 32))},
+			},
+		},
+	})
+	var got []*Person
+	if err := client.Query(&got).
+		Table(tableName).
+		ExpressionAttributeValue(":pk", fmt.Sprintf("Person#%s", want[0].Name)).
+		ExpressionAttributeValue(":age", want[0].Age).
+		KeyConditionExpression("PK = :pk and SK > :age").
+		Exec(); err != nil {
+		t.Fatalf("unexpected err: %s", err)
+	}
+	assertEq(t, want, got)
+	ddb.done()
+}
+
+func TestExpFloat64(t *testing.T) {
+	ddb := mock(t)
+	client := dynago.New(ddb)
+	type Person struct {
+		Name string  `idx:"primary" attr:"PK" fmt:"Person#{}"`
+		Age  float64 `idx:"primary" attr:"SK"`
+	}
+	want := []*Person{{
+		Name: "foo",
+		Age:  33,
+	}}
+	tableName := "baz"
+	ddb.MockQuery(&dynamodb.QueryInput{
+		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
+			":pk":  {S: aws.String(fmt.Sprintf("Person#%s", want[0].Name))},
+			":age": {N: aws.String(strconv.FormatFloat(float64(want[0].Age), 'f', -1, 64))},
+		},
+		KeyConditionExpression: aws.String("PK = :pk and SK > :age"),
+		TableName:              &tableName,
+		ConsistentRead:         aws.Bool(false),
+	}, &dynamodb.QueryOutput{
+		Items: []map[string]*dynamodb.AttributeValue{
+			{
+				"PK": {S: aws.String(fmt.Sprintf("Person#%s", want[0].Name))},
+				"SK": {N: aws.String(strconv.FormatFloat(float64(want[0].Age), 'f', -1, 64))},
+			},
+		},
+	})
+	var got []*Person
+	if err := client.Query(&got).
+		Table(tableName).
+		ExpressionAttributeValue(":pk", fmt.Sprintf("Person#%s", want[0].Name)).
+		ExpressionAttributeValue(":age", want[0].Age).
+		KeyConditionExpression("PK = :pk and SK > :age").
+		Exec(); err != nil {
+		t.Fatalf("unexpected err: %s", err)
+	}
+	assertEq(t, want, got)
+	ddb.done()
+}

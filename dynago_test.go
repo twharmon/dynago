@@ -385,6 +385,36 @@ func TestMarshalSliceTime(t *testing.T) {
 	assertEq(t, want, got)
 }
 
+func TestUnmarshalSliceTime(t *testing.T) {
+	type Person struct {
+		Appointments []time.Time `layout:"Monday, 02-Jan-06 15:04:05 MST"`
+	}
+	want := Person{
+		Appointments: []time.Time{time.Now().Round(time.Second), time.Now().Round(time.Second).Add(time.Hour)},
+	}
+	item := map[string]*dynamodb.AttributeValue{
+		"Appointments": {},
+	}
+	for i := range want.Appointments {
+		s := want.Appointments[i].Format("Monday, 02-Jan-06 15:04:05 MST")
+		av := &dynamodb.AttributeValue{S: &s}
+		item["Appointments"].L = append(item["Appointments"].L, av)
+	}
+	client := dynago.New(nil)
+	var got Person
+	err := client.Unmarshal(item, &got)
+	if err != nil {
+		t.Fatalf("unexpected err: %s", err)
+	}
+	for i := range got.Appointments {
+		gota := got.Appointments[i]
+		wanta := want.Appointments[i]
+		if !gota.Equal(wanta) {
+			t.Fatalf("times not equal: %s != %s", wanta.Format(time.RFC3339), gota.Format(time.RFC3339))
+		}
+	}
+}
+
 func TestMarshalSliceTimePtr(t *testing.T) {
 	type Person struct {
 		Appointments []*time.Time
@@ -545,6 +575,258 @@ func TestUnmarshalInt64(t *testing.T) {
 	assertEq(t, want, got)
 }
 
+func TestMarshalInt8(t *testing.T) {
+	type Person struct {
+		Age int8
+	}
+	p := Person{
+		Age: 33,
+	}
+	want := map[string]*dynamodb.AttributeValue{
+		"Age": {N: aws.String(fmt.Sprintf("%d", p.Age))},
+	}
+	client := dynago.New(nil)
+	got, err := client.Marshal(&p)
+	if err != nil {
+		t.Fatalf("unexpected err: %s", err)
+	}
+	assertEq(t, want, got)
+}
+
+func TestUnmarshalInt8(t *testing.T) {
+	type Person struct {
+		Age int8
+	}
+	want := Person{
+		Age: 33,
+	}
+	item := map[string]*dynamodb.AttributeValue{
+		"Age": {N: aws.String(strconv.FormatInt(int64(want.Age), 10))},
+	}
+	client := dynago.New(nil)
+	var got Person
+	if err := client.Unmarshal(item, &got); err != nil {
+		t.Fatalf("unexpected err: %s", err)
+	}
+	assertEq(t, want, got)
+}
+
+func TestMarshalInt16(t *testing.T) {
+	type Person struct {
+		Age int16
+	}
+	p := Person{
+		Age: 33,
+	}
+	want := map[string]*dynamodb.AttributeValue{
+		"Age": {N: aws.String(fmt.Sprintf("%d", p.Age))},
+	}
+	client := dynago.New(nil)
+	got, err := client.Marshal(&p)
+	if err != nil {
+		t.Fatalf("unexpected err: %s", err)
+	}
+	assertEq(t, want, got)
+}
+
+func TestUnmarshalInt16(t *testing.T) {
+	type Person struct {
+		Age int16
+	}
+	want := Person{
+		Age: 33,
+	}
+	item := map[string]*dynamodb.AttributeValue{
+		"Age": {N: aws.String(strconv.FormatInt(int64(want.Age), 10))},
+	}
+	client := dynago.New(nil)
+	var got Person
+	if err := client.Unmarshal(item, &got); err != nil {
+		t.Fatalf("unexpected err: %s", err)
+	}
+	assertEq(t, want, got)
+}
+
+func TestMarshalInt32(t *testing.T) {
+	type Person struct {
+		Age int32
+	}
+	p := Person{
+		Age: 33,
+	}
+	want := map[string]*dynamodb.AttributeValue{
+		"Age": {N: aws.String(fmt.Sprintf("%d", p.Age))},
+	}
+	client := dynago.New(nil)
+	got, err := client.Marshal(&p)
+	if err != nil {
+		t.Fatalf("unexpected err: %s", err)
+	}
+	assertEq(t, want, got)
+}
+
+func TestUnmarshalInt32(t *testing.T) {
+	type Person struct {
+		Age int32
+	}
+	want := Person{
+		Age: 33,
+	}
+	item := map[string]*dynamodb.AttributeValue{
+		"Age": {N: aws.String(strconv.FormatInt(int64(want.Age), 10))},
+	}
+	client := dynago.New(nil)
+	var got Person
+	if err := client.Unmarshal(item, &got); err != nil {
+		t.Fatalf("unexpected err: %s", err)
+	}
+	assertEq(t, want, got)
+}
+
+func TestMarshalInt(t *testing.T) {
+	type Person struct {
+		Age int
+	}
+	p := Person{
+		Age: 33,
+	}
+	want := map[string]*dynamodb.AttributeValue{
+		"Age": {N: aws.String(fmt.Sprintf("%d", p.Age))},
+	}
+	client := dynago.New(nil)
+	got, err := client.Marshal(&p)
+	if err != nil {
+		t.Fatalf("unexpected err: %s", err)
+	}
+	assertEq(t, want, got)
+}
+
+func TestUnmarshalInt(t *testing.T) {
+	type Person struct {
+		Age int
+	}
+	want := Person{
+		Age: 33,
+	}
+	item := map[string]*dynamodb.AttributeValue{
+		"Age": {N: aws.String(strconv.FormatInt(int64(want.Age), 10))},
+	}
+	client := dynago.New(nil)
+	var got Person
+	if err := client.Unmarshal(item, &got); err != nil {
+		t.Fatalf("unexpected err: %s", err)
+	}
+	assertEq(t, want, got)
+}
+
+func TestMarshalUint(t *testing.T) {
+	type Person struct {
+		Age uint
+	}
+	p := Person{
+		Age: 33,
+	}
+	want := map[string]*dynamodb.AttributeValue{
+		"Age": {N: aws.String(fmt.Sprintf("%d", p.Age))},
+	}
+	client := dynago.New(nil)
+	got, err := client.Marshal(&p)
+	if err != nil {
+		t.Fatalf("unexpected err: %s", err)
+	}
+	assertEq(t, want, got)
+}
+
+func TestMarshalUint8(t *testing.T) {
+	type Person struct {
+		Age uint8
+	}
+	p := Person{
+		Age: 33,
+	}
+	want := map[string]*dynamodb.AttributeValue{
+		"Age": {N: aws.String(fmt.Sprintf("%d", p.Age))},
+	}
+	client := dynago.New(nil)
+	got, err := client.Marshal(&p)
+	if err != nil {
+		t.Fatalf("unexpected err: %s", err)
+	}
+	assertEq(t, want, got)
+}
+
+func TestMarshalUint16(t *testing.T) {
+	type Person struct {
+		Age uint16
+	}
+	p := Person{
+		Age: 33,
+	}
+	want := map[string]*dynamodb.AttributeValue{
+		"Age": {N: aws.String(fmt.Sprintf("%d", p.Age))},
+	}
+	client := dynago.New(nil)
+	got, err := client.Marshal(&p)
+	if err != nil {
+		t.Fatalf("unexpected err: %s", err)
+	}
+	assertEq(t, want, got)
+}
+
+func TestMarshalUint32(t *testing.T) {
+	type Person struct {
+		Age uint32
+	}
+	p := Person{
+		Age: 33,
+	}
+	want := map[string]*dynamodb.AttributeValue{
+		"Age": {N: aws.String(fmt.Sprintf("%d", p.Age))},
+	}
+	client := dynago.New(nil)
+	got, err := client.Marshal(&p)
+	if err != nil {
+		t.Fatalf("unexpected err: %s", err)
+	}
+	assertEq(t, want, got)
+}
+
+func TestMarshalUint64(t *testing.T) {
+	type Person struct {
+		Age uint64
+	}
+	p := Person{
+		Age: 33,
+	}
+	want := map[string]*dynamodb.AttributeValue{
+		"Age": {N: aws.String(fmt.Sprintf("%d", p.Age))},
+	}
+	client := dynago.New(nil)
+	got, err := client.Marshal(&p)
+	if err != nil {
+		t.Fatalf("unexpected err: %s", err)
+	}
+	assertEq(t, want, got)
+}
+
+func TestUnmarshalUint(t *testing.T) {
+	type Person struct {
+		Age uint
+	}
+	want := Person{
+		Age: 33,
+	}
+	item := map[string]*dynamodb.AttributeValue{
+		"Age": {N: aws.String(strconv.FormatInt(int64(want.Age), 10))},
+	}
+	client := dynago.New(nil)
+	var got Person
+	if err := client.Unmarshal(item, &got); err != nil {
+		t.Fatalf("unexpected err: %s", err)
+	}
+	assertEq(t, want, got)
+}
+
 func TestMarshalFloat64(t *testing.T) {
 	type Person struct {
 		Age float64
@@ -566,6 +848,42 @@ func TestMarshalFloat64(t *testing.T) {
 func TestUnmarshalFloat64(t *testing.T) {
 	type Person struct {
 		Age float64
+	}
+	want := Person{
+		Age: 33.234,
+	}
+	item := map[string]*dynamodb.AttributeValue{
+		"Age": {N: aws.String("33.234")},
+	}
+	client := dynago.New(nil)
+	var got Person
+	if err := client.Unmarshal(item, &got); err != nil {
+		t.Fatalf("unexpected err: %s", err)
+	}
+	assertEq(t, want, got)
+}
+
+func TestMarshalFloat32(t *testing.T) {
+	type Person struct {
+		Age float32
+	}
+	p := Person{
+		Age: 33.44567,
+	}
+	want := map[string]*dynamodb.AttributeValue{
+		"Age": {N: aws.String("33.44567")},
+	}
+	client := dynago.New(nil)
+	got, err := client.Marshal(&p)
+	if err != nil {
+		t.Fatalf("unexpected err: %s", err)
+	}
+	assertEq(t, want, got)
+}
+
+func TestUnmarshalFloat32(t *testing.T) {
+	type Person struct {
+		Age float32
 	}
 	want := Person{
 		Age: 33.234,
@@ -811,7 +1129,7 @@ func BenchmarkMarshalByHand(b *testing.B) {
 		_ = map[string]*dynamodb.AttributeValue{
 			"name":       {S: aws.String(fmt.Sprintf("Person#%s", p.Name))},
 			"Age":        {N: aws.String(strconv.FormatInt(p.Age, 10))},
-			"Percentage": {N: aws.String(strings.TrimRight(strconv.FormatFloat(p.Percentage, 'f', 14, 64), "0"))},
+			"Percentage": {N: aws.String(strings.TrimRight(strconv.FormatFloat(p.Percentage, 'f', -1, 64), "0"))},
 			"Alive":      {BOOL: &p.Alive},
 			"Born":       {S: aws.String(p.Born.Format(time.RFC3339))},
 		}
@@ -829,7 +1147,7 @@ func BenchmarkUnmarshal(b *testing.B) {
 	item := map[string]*dynamodb.AttributeValue{
 		"name":       {S: aws.String("Person#George")},
 		"Age":        {N: aws.String(strconv.FormatInt(33, 10))},
-		"Percentage": {N: aws.String(strings.TrimRight(strconv.FormatFloat(25.323521, 'f', 14, 64), "0"))},
+		"Percentage": {N: aws.String(strings.TrimRight(strconv.FormatFloat(25.323521, 'f', -1, 64), "0"))},
 		"Alive":      {BOOL: aws.Bool(true)},
 		"Born":       {S: aws.String(time.Now().Format(time.RFC3339))},
 	}
@@ -854,7 +1172,7 @@ func BenchmarkUnmarshalByHand(b *testing.B) {
 	item := map[string]*dynamodb.AttributeValue{
 		"name":       {S: aws.String("Person#George")},
 		"Age":        {N: aws.String(strconv.FormatInt(33, 10))},
-		"Percentage": {N: aws.String(strings.TrimRight(strconv.FormatFloat(25.323521, 'f', 14, 64), "0"))},
+		"Percentage": {N: aws.String(strings.TrimRight(strconv.FormatFloat(25.323521, 'f', -1, 64), "0"))},
 		"Alive":      {BOOL: aws.Bool(true)},
 		"Born":       {S: aws.String(time.Now().Format(time.RFC3339))},
 	}

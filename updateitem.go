@@ -12,7 +12,7 @@ type UpdateItem struct {
 	dynago *Dynago
 }
 
-func (d *Dynago) Update(item interface{}) *UpdateItem {
+func (d *Dynago) UpdateItem(item interface{}) *UpdateItem {
 	return &UpdateItem{
 		input:  &dynamodb.UpdateItemInput{TableName: &d.config.DefaultTableName},
 		dynago: d,

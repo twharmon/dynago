@@ -28,7 +28,7 @@ func TestUpdateItemBasic(t *testing.T) {
 		UpdateExpression: aws.String("foo"),
 		TableName:        &tableName,
 	})
-	if err := client.Update(&p).UpdateExpression("foo").TableName(tableName).Exec(); err != nil {
+	if err := client.UpdateItem(&p).UpdateExpression("foo").TableName(tableName).Exec(); err != nil {
 		t.Fatalf("unexpected err: %s", err)
 	}
 	ddb.done()
@@ -53,7 +53,7 @@ func TestUpdateItemExpAttrVals(t *testing.T) {
 		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{"foo": {S: aws.String("bar")}},
 		TableName:                 &tableName,
 	})
-	if err := client.Update(&p).TableName(tableName).ExpressionAttributeValue("foo", "bar").Exec(); err != nil {
+	if err := client.UpdateItem(&p).TableName(tableName).ExpressionAttributeValue("foo", "bar").Exec(); err != nil {
 		t.Fatalf("unexpected err: %s", err)
 	}
 	ddb.done()
@@ -78,7 +78,7 @@ func TestUpdateItemCondExp(t *testing.T) {
 		ConditionExpression: aws.String("foo"),
 		TableName:           &tableName,
 	})
-	if err := client.Update(&p).TableName(tableName).ConditionExpression("foo").Exec(); err != nil {
+	if err := client.UpdateItem(&p).TableName(tableName).ConditionExpression("foo").Exec(); err != nil {
 		t.Fatalf("unexpected err: %s", err)
 	}
 	ddb.done()
@@ -103,7 +103,7 @@ func TestUpdateItemExpAttrNames(t *testing.T) {
 		ExpressionAttributeNames: map[string]*string{"foo": aws.String("#f")},
 		TableName:                &tableName,
 	})
-	if err := client.Update(&p).TableName(tableName).ExpressionAttributeName("foo", "#f").Exec(); err != nil {
+	if err := client.UpdateItem(&p).TableName(tableName).ExpressionAttributeName("foo", "#f").Exec(); err != nil {
 		t.Fatalf("unexpected err: %s", err)
 	}
 	ddb.done()
@@ -128,7 +128,7 @@ func TestUpdateItemUpExp(t *testing.T) {
 		UpdateExpression: aws.String("foo"),
 		TableName:        &tableName,
 	})
-	if err := client.Update(&p).TableName(tableName).UpdateExpression("foo").Exec(); err != nil {
+	if err := client.UpdateItem(&p).TableName(tableName).UpdateExpression("foo").Exec(); err != nil {
 		t.Fatalf("unexpected err: %s", err)
 	}
 	ddb.done()
@@ -152,7 +152,7 @@ func TestUpdateItemDefaultTableName(t *testing.T) {
 		},
 		TableName: &tableName,
 	})
-	if err := client.Update(&p).Exec(); err != nil {
+	if err := client.UpdateItem(&p).Exec(); err != nil {
 		t.Fatalf("unexpected err: %s", err)
 	}
 	ddb.done()

@@ -12,7 +12,7 @@ type PutItem struct {
 	dynago *Dynago
 }
 
-func (d *Dynago) Put(item interface{}) *PutItem {
+func (d *Dynago) PutItem(item interface{}) *PutItem {
 	return &PutItem{
 		input:  &dynamodb.PutItemInput{TableName: &d.config.DefaultTableName},
 		dynago: d,

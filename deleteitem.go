@@ -12,7 +12,7 @@ type DeleteItem struct {
 	dynago *Dynago
 }
 
-func (d *Dynago) Delete(item interface{}) *DeleteItem {
+func (d *Dynago) DeleteItem(item interface{}) *DeleteItem {
 	return &DeleteItem{
 		item: item,
 		input: &dynamodb.DeleteItemInput{

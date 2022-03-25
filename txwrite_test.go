@@ -73,9 +73,9 @@ func TestTransactWriteItemsBasic(t *testing.T) {
 
 	if err := client.TransactWriteItems().
 		Items(
-			client.Put(&p).TableName(tableName),
-			client.Update(&p).TableName(tableName),
-			client.Delete(&p2).TableName(tableName),
+			client.PutItem(&p).TableName(tableName),
+			client.UpdateItem(&p).TableName(tableName),
+			client.DeleteItem(&p2).TableName(tableName),
 			client.ConditionCheck(&p2).
 				TableName(tableName).
 				ConditionExpression("foo").
@@ -129,8 +129,8 @@ func TestTransactWriteItemsClientReqTok(t *testing.T) {
 
 	if err := client.TransactWriteItems().
 		Items(
-			client.Put(&p).TableName(tableName),
-			client.Delete(&p2).TableName(tableName),
+			client.PutItem(&p).TableName(tableName),
+			client.DeleteItem(&p2).TableName(tableName),
 		).
 		ClientRequestToken("foo").
 		Exec(); err != nil {

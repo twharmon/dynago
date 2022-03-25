@@ -152,15 +152,6 @@ type Event struct {
 }
 ```
 
-## Potential Improvements
-- features
-	- transaction read items
-	- batch read items
-	- batch write items
-	- backwards compatible return value support
-- support for go map types
-- MarshalAttributeValue & UnmarshalAttributeValue interfaces for more customization
-
 ## Benchmarks
 ```
 BenchmarkMarshal-10            	  472528	      2180 ns/op	    1733 B/op	      27 allocs/op

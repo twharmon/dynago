@@ -30,7 +30,7 @@ func TestDeleteItemBasic(t *testing.T) {
 	got := Person{
 		Name: want.Name,
 	}
-	if err := client.Delete(&got).TableName(tableName).Exec(); err != nil {
+	if err := client.DeleteItem(&got).TableName(tableName).Exec(); err != nil {
 		t.Fatalf("unexpected err: %s", err)
 	}
 	ddb.done()
@@ -58,7 +58,7 @@ func TestDeleteItemConditionExpression(t *testing.T) {
 	got := Person{
 		Name: want.Name,
 	}
-	if err := client.Delete(&got).TableName(tableName).ConditionExpression("foo").Exec(); err != nil {
+	if err := client.DeleteItem(&got).TableName(tableName).ConditionExpression("foo").Exec(); err != nil {
 		t.Fatalf("unexpected err: %s", err)
 	}
 	ddb.done()
@@ -86,7 +86,7 @@ func TestDeleteItemExpressionAttributeNames(t *testing.T) {
 	got := Person{
 		Name: want.Name,
 	}
-	if err := client.Delete(&got).TableName(tableName).ExpressionAttributeName("foo", "#f").Exec(); err != nil {
+	if err := client.DeleteItem(&got).TableName(tableName).ExpressionAttributeName("foo", "#f").Exec(); err != nil {
 		t.Fatalf("unexpected err: %s", err)
 	}
 	ddb.done()
@@ -114,7 +114,7 @@ func TestDeleteItemExpressionAttributValues(t *testing.T) {
 	got := Person{
 		Name: want.Name,
 	}
-	if err := client.Delete(&got).TableName(tableName).ExpressionAttributeValue("foo", "bar").Exec(); err != nil {
+	if err := client.DeleteItem(&got).TableName(tableName).ExpressionAttributeValue("foo", "bar").Exec(); err != nil {
 		t.Fatalf("unexpected err: %s", err)
 	}
 	ddb.done()
@@ -141,7 +141,7 @@ func TestDeleteItemDefaultTableName(t *testing.T) {
 	got := Person{
 		Name: want.Name,
 	}
-	if err := client.Delete(&got).Exec(); err != nil {
+	if err := client.DeleteItem(&got).Exec(); err != nil {
 		t.Fatalf("unexpected err: %s", err)
 	}
 	ddb.done()

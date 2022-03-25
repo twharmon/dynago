@@ -29,7 +29,7 @@ func TestPutItemBasic(t *testing.T) {
 		},
 		TableName: &tableName,
 	})
-	if err := client.Put(&p).TableName(tableName).Exec(); err != nil {
+	if err := client.PutItem(&p).TableName(tableName).Exec(); err != nil {
 		t.Fatalf("unexpected err: %s", err)
 	}
 	ddb.done()
@@ -55,7 +55,7 @@ func TestPutItemExpAttrVals(t *testing.T) {
 		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{"foo": {S: aws.String("bar")}},
 		TableName:                 &tableName,
 	})
-	if err := client.Put(&p).TableName(tableName).ExpressionAttributeValue("foo", "bar").Exec(); err != nil {
+	if err := client.PutItem(&p).TableName(tableName).ExpressionAttributeValue("foo", "bar").Exec(); err != nil {
 		t.Fatalf("unexpected err: %s", err)
 	}
 	ddb.done()
@@ -81,7 +81,7 @@ func TestPutItemCondExp(t *testing.T) {
 		ConditionExpression: aws.String("foo"),
 		TableName:           &tableName,
 	})
-	if err := client.Put(&p).TableName(tableName).ConditionExpression("foo").Exec(); err != nil {
+	if err := client.PutItem(&p).TableName(tableName).ConditionExpression("foo").Exec(); err != nil {
 		t.Fatalf("unexpected err: %s", err)
 	}
 	ddb.done()
@@ -107,7 +107,7 @@ func TestPutItemExpAttrNames(t *testing.T) {
 		ExpressionAttributeNames: map[string]*string{"foo": aws.String("#f")},
 		TableName:                &tableName,
 	})
-	if err := client.Put(&p).TableName(tableName).ExpressionAttributeName("foo", "#f").Exec(); err != nil {
+	if err := client.PutItem(&p).TableName(tableName).ExpressionAttributeName("foo", "#f").Exec(); err != nil {
 		t.Fatalf("unexpected err: %s", err)
 	}
 	ddb.done()
@@ -132,7 +132,7 @@ func TestPutItemDefaultTableName(t *testing.T) {
 		},
 		TableName: &tableName,
 	})
-	if err := client.Put(&p).Exec(); err != nil {
+	if err := client.PutItem(&p).Exec(); err != nil {
 		t.Fatalf("unexpected err: %s", err)
 	}
 	ddb.done()

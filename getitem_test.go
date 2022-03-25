@@ -37,7 +37,7 @@ func TestGetItemBasic(t *testing.T) {
 	got := Person{
 		Name: want.Name,
 	}
-	if err := client.Get(&got).TableName(tableName).Exec(); err != nil {
+	if err := client.GetItem(&got).TableName(tableName).Exec(); err != nil {
 		t.Fatalf("unexpected err: %s", err)
 	}
 	assertEq(t, want, got)
@@ -71,7 +71,7 @@ func TestGetItemConsistentRead(t *testing.T) {
 	got := Person{
 		Name: want.Name,
 	}
-	if err := client.Get(&got).TableName(tableName).ConsistentRead(true).Exec(); err != nil {
+	if err := client.GetItem(&got).TableName(tableName).ConsistentRead(true).Exec(); err != nil {
 		t.Fatalf("unexpected err: %s", err)
 	}
 	assertEq(t, want, got)
@@ -106,7 +106,7 @@ func TestGetItemProjectionExpression(t *testing.T) {
 	got := Person{
 		Name: want.Name,
 	}
-	if err := client.Get(&got).TableName(tableName).ProjectionExpression("foo").Exec(); err != nil {
+	if err := client.GetItem(&got).TableName(tableName).ProjectionExpression("foo").Exec(); err != nil {
 		t.Fatalf("unexpected err: %s", err)
 	}
 	assertEq(t, want, got)
@@ -143,7 +143,7 @@ func TestGetItemExpressionAttributeNames(t *testing.T) {
 	got := Person{
 		Name: want.Name,
 	}
-	if err := client.Get(&got).TableName(tableName).ExpressionAttributeName("foo", "#f").Exec(); err != nil {
+	if err := client.GetItem(&got).TableName(tableName).ExpressionAttributeName("foo", "#f").Exec(); err != nil {
 		t.Fatalf("unexpected err: %s", err)
 	}
 	assertEq(t, want, got)
@@ -179,7 +179,7 @@ func TestGetItemCopy(t *testing.T) {
 	got := Person{
 		Name: want.Name,
 	}
-	if err := client.Get(&got).TableName(tableName).Exec(); err != nil {
+	if err := client.GetItem(&got).TableName(tableName).Exec(); err != nil {
 		t.Fatalf("unexpected err: %s", err)
 	}
 	assertEq(t, want, got)
@@ -213,7 +213,7 @@ func TestGetItemDefaultTableName(t *testing.T) {
 	got := Person{
 		Name: want.Name,
 	}
-	if err := client.Get(&got).Exec(); err != nil {
+	if err := client.GetItem(&got).Exec(); err != nil {
 		t.Fatalf("unexpected err: %s", err)
 	}
 	assertEq(t, want, got)

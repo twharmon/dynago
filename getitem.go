@@ -15,7 +15,7 @@ type GetItem struct {
 	dynago *Dynago
 }
 
-func (d *Dynago) Get(item interface{}) *GetItem {
+func (d *Dynago) GetItem(item interface{}) *GetItem {
 	return &GetItem{
 		input: &dynamodb.GetItemInput{
 			ConsistentRead: &d.config.DefaultConsistentRead,

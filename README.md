@@ -49,7 +49,7 @@ func main() {
 		Body:    "Hello world!",
 		Created: time.Now(),
 	}
-	if err := ddb.Put(&p).Exec(); err != nil {
+	if err := ddb.PutItem(&p).Exec(); err != nil {
 		panic(err)
 	}
 
@@ -59,7 +59,7 @@ func main() {
 		ID:      p.ID,
 		Created: p.Created,
 	}
-	if err := ddb.Get(&p2).Exec(); err != nil {
+	if err := ddb.GetItem(&p2).Exec(); err != nil {
 		panic(err)
 	}
 	fmt.Println(p2)

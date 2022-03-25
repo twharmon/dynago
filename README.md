@@ -153,12 +153,10 @@ type Event struct {
 ```
 
 ## Todo
-- query builder
-	- scan
-	- update
-	- transactions
-	- misc
-		- add all sdk features
+- transaction read items
+- batch read items
+- batch write items
+- condition checks
 
 ## Benchmarks
 ```

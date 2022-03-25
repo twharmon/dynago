@@ -14,7 +14,7 @@ func TestTransactWriteItemsBasic(t *testing.T) {
 	ddb := mock(t)
 	client := dynago.New(ddb)
 	type Person struct {
-		Name string `idx:"primary" attr:"PK" fmt:"Person#{}"`
+		Name string `idx:"primary" attr:"PK" fmt:"Person#{}" idx:"primary"`
 		Age  int64
 	}
 	p := Person{
@@ -38,6 +38,14 @@ func TestTransactWriteItemsBasic(t *testing.T) {
 				},
 			},
 			{
+				Update: &dynamodb.Update{
+					Key: map[string]*dynamodb.AttributeValue{
+						"PK": {S: aws.String(fmt.Sprintf("Person#%s", p.Name))},
+					},
+					TableName: &tableName,
+				},
+			},
+			{
 				Delete: &dynamodb.Delete{
 					Key: map[string]*dynamodb.AttributeValue{
 						"PK": {S: aws.String(fmt.Sprintf("Person#%s", p2.Name))},
@@ -51,6 +59,7 @@ func TestTransactWriteItemsBasic(t *testing.T) {
 	if err := client.TransactWriteItems().
 		Items(
 			client.Put(&p).TableName(tableName),
+			client.Update(&p).TableName(tableName),
 			client.Delete(&p2).TableName(tableName),
 		).
 		Exec(); err != nil {

@@ -152,12 +152,6 @@ type Event struct {
 }
 ```
 
-## Todo
-- transaction read items
-- batch read items
-- batch write items
-- condition checks
-
 ## Benchmarks
 ```
 BenchmarkMarshal-10            	  472528	      2180 ns/op	    1733 B/op	      27 allocs/op

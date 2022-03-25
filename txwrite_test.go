@@ -53,6 +53,21 @@ func TestTransactWriteItemsBasic(t *testing.T) {
 					TableName: &tableName,
 				},
 			},
+			{
+				ConditionCheck: &dynamodb.ConditionCheck{
+					Key: map[string]*dynamodb.AttributeValue{
+						"PK": {S: aws.String(fmt.Sprintf("Person#%s", p2.Name))},
+					},
+					ConditionExpression: aws.String("foo"),
+					ExpressionAttributeNames: map[string]*string{
+						"foo": aws.String("bar"),
+					},
+					ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
+						"foo": {S: aws.String("bar")},
+					},
+					TableName: &tableName,
+				},
+			},
 		},
 	})
 
@@ -61,6 +76,11 @@ func TestTransactWriteItemsBasic(t *testing.T) {
 			client.Put(&p).TableName(tableName),
 			client.Update(&p).TableName(tableName),
 			client.Delete(&p2).TableName(tableName),
+			client.ConditionCheck(&p2).
+				TableName(tableName).
+				ConditionExpression("foo").
+				ExpressionAttributeName("foo", "bar").
+				ExpressionAttributeValue("foo", "bar"),
 		).
 		Exec(); err != nil {
 		t.Fatalf("unexpected err: %s", err)

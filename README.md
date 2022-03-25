@@ -152,11 +152,14 @@ type Event struct {
 }
 ```
 
-## Todo
-- transaction read items
-- batch read items
-- batch write items
-- condition checks
+## Potential Improvements
+- features
+	- transaction read items
+	- batch read items
+	- batch write items
+	- backwards compatible return value support
+- support for go map types
+- MarshalAttributeValue & UnmarshalAttributeValue interfaces for more customization
 
 ## Benchmarks
 ```

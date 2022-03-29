@@ -9,6 +9,19 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
 )
 
+type DynagoAPI interface {
+	DeleteItem(interface{}) *DeleteItem
+	PutItem(interface{}) *PutItem
+	GetItem(interface{}) *GetItem
+	Query(interface{}) *Query
+	Scan(interface{}) *Scan
+	UpdateItem(interface{}) *UpdateItem
+	ConditionCheck(interface{}) *ConditionCheck
+	TransactionWriteItems() *TransactionWriteItems
+	Marshal(interface{}) (map[string]*dynamodb.AttributeValue, error)
+	Unmarshal(map[string]*dynamodb.AttributeValue, interface{}) error
+}
+
 type Dynago struct {
 	config   *Config
 	cache    map[string]map[int]*field

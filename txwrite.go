@@ -14,7 +14,7 @@ type TransactionWriteItems struct {
 	client *Dynago
 }
 
-func (d *Dynago) TransactWriteItems() *TransactionWriteItems {
+func (d *Dynago) TransactionWriteItems() *TransactionWriteItems {
 	var i TransactionWriteItems
 	i.input = &dynamodb.TransactWriteItemsInput{}
 	i.client = d

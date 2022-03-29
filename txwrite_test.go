@@ -71,7 +71,7 @@ func TestTransactWriteItemsBasic(t *testing.T) {
 		},
 	})
 
-	if err := client.TransactWriteItems().
+	if err := client.TransactionWriteItems().
 		Items(
 			client.PutItem(&p).TableName(tableName),
 			client.UpdateItem(&p).TableName(tableName),
@@ -127,7 +127,7 @@ func TestTransactWriteItemsClientReqTok(t *testing.T) {
 		},
 	})
 
-	if err := client.TransactWriteItems().
+	if err := client.TransactionWriteItems().
 		Items(
 			client.PutItem(&p).TableName(tableName),
 			client.DeleteItem(&p2).TableName(tableName),

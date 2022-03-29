@@ -68,7 +68,7 @@ type Config struct {
 	DefaultConsistentRead bool
 }
 
-func New(ddb dynamodbiface.DynamoDBAPI, config ...*Config) DynagoAPI {
+func New(ddb dynamodbiface.DynamoDBAPI, config ...*Config) *Dynago {
 	d := Dynago{
 		cache:  make(map[string]map[int]*field),
 		config: &Config{},

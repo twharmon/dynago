@@ -93,10 +93,10 @@ func (q *Scan) ExpressionAttributeName(name string, sub string) *Scan {
 
 func (q *Scan) Exec() error {
 	rv := reflect.ValueOf(q.items)
-	if rv.Kind() != reflect.Pointer {
+	if rv.Kind() != reflect.Ptr {
 		return errors.New("dynago: dynago.Scan.Exec: v must be pointer")
 	}
-	for rv.Kind() == reflect.Pointer {
+	for rv.Kind() == reflect.Ptr {
 		rv = reflect.Indirect(rv)
 	}
 	var err error
@@ -105,16 +105,16 @@ func (q *Scan) Exec() error {
 		return fmt.Errorf("d.ddb.GetItem: %w", err)
 	}
 	rt := reflect.TypeOf(q.items)
-	for rt.Kind() == reflect.Pointer {
+	for rt.Kind() == reflect.Ptr {
 		rt = rt.Elem()
 	}
 	ft := rt.Elem()
 	indirect := true
-	if ft.Kind() == reflect.Pointer {
+	if ft.Kind() == reflect.Ptr {
 		ft = ft.Elem()
 		indirect = false
 	}
-	if ft.Kind() == reflect.Pointer {
+	if ft.Kind() == reflect.Ptr {
 		return errors.New("dynago: dynago.Scan.Exec: elements of v can not be pointers to pointers")
 	}
 	s := reflect.MakeSlice(rt, len(output.Items), len(output.Items))

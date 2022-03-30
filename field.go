@@ -89,7 +89,7 @@ func (d *Dynago) field(sf reflect.StructField, index int) (*field, error) {
 			}
 		case reflect.Slice:
 			elTy := ty.Elem()
-			for elTy.Kind() == reflect.Pointer {
+			for elTy.Kind() == reflect.Ptr {
 				elTy = elTy.Elem()
 			}
 			switch elTy {
@@ -170,7 +170,7 @@ func (f *field) parse(s string, v reflect.Value) error {
 		} else {
 			fval = v.FieldByName(fname)
 		}
-		for fval.Kind() == reflect.Pointer {
+		for fval.Kind() == reflect.Ptr {
 			fval = fval.Elem()
 		}
 		fty := fval.Type()
@@ -265,7 +265,7 @@ func (f *field) parse(s string, v reflect.Value) error {
 
 func (f *field) attrVal(v reflect.Value) (*dynamodb.AttributeValue, error) {
 	fv := v.Field(f.index)
-	for fv.Kind() == reflect.Pointer {
+	for fv.Kind() == reflect.Ptr {
 		fv = fv.Elem()
 	}
 	switch f.attrType {
@@ -284,7 +284,7 @@ func (f *field) attrVal(v reflect.Value) (*dynamodb.AttributeValue, error) {
 
 func (f *field) unmarshal(item map[string]*dynamodb.AttributeValue, v reflect.Value) error {
 	fv := v.Field(f.index)
-	for fv.Kind() == reflect.Pointer {
+	for fv.Kind() == reflect.Ptr {
 		if fv.IsNil() {
 			fv.Set(reflect.New(fv.Type().Elem()))
 		}

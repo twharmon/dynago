@@ -32,29 +32,33 @@ type Dynago struct {
 // Config is used to customize struct tag names.
 type Config struct {
 	// AttrTagName specifies which tag is used for a DynamoDB
-	// item attribute name.
+	// item attribute name. Defaults to "attr".
 	AttrTagName string
 
 	// FmtTagName specifies which tag is used to format the attribute
-	// value. This is only used for String types.
+	// value. This is only used for String types. Defaults to "fmt".
 	FmtTagName string
 
 	// TypeTagName specifies which tag is used for DynamoDB type.
+	// Defaults to "type".
 	TypeTagName string
 
 	// LayoutTagName specifies which tag is used for formatting time
-	// values.
+	// values. Defaults to "layout".
 	LayoutTagName string
 
 	// IndexTagName specifies which tag is used for table index name.
+	// Defaults to "idx".
 	IndexTagName string
 
 	// AttrsToCopyTagName specifies which tag is used to determine
-	// which other attributes should have same value.
+	// which other attributes should have same value. Defaults to
+	// "copy".
 	AttrsToCopyTagName string
 
 	// AttrsToCopyIndexTagName specifies which tag is used to
 	// determine which other attributes should have same index.
+	// Defaults to "copyidx".
 	AttrsToCopyIndexTagName string
 
 	// AdditionalAttrs can be added for each dynamodb item.

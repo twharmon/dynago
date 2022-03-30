@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"reflect"
 	"strconv"
+
 	// "strings"
 	"time"
 
@@ -12,11 +13,11 @@ import (
 
 func tyVal(v interface{}) (reflect.Type, reflect.Value) {
 	ty := reflect.TypeOf(v)
-	for ty.Kind() == reflect.Pointer {
+	for ty.Kind() == reflect.Ptr {
 		ty = ty.Elem()
 	}
 	val := reflect.ValueOf(v)
-	for val.Kind() == reflect.Pointer {
+	for val.Kind() == reflect.Ptr {
 		val = val.Elem()
 	}
 	return ty, val
@@ -30,7 +31,7 @@ func (d *Dynago) simpleUnmarshal(v reflect.Value, av *dynamodb.AttributeValue, l
 	if av == nil {
 		return nil
 	}
-	for v.Kind() == reflect.Pointer {
+	for v.Kind() == reflect.Ptr {
 		if v.IsNil() {
 			v.Set(reflect.New(v.Type().Elem()))
 		}
@@ -172,7 +173,7 @@ func (d *Dynago) simpleUnmarshal(v reflect.Value, av *dynamodb.AttributeValue, l
 }
 
 func (d *Dynago) simpleMarshal(v reflect.Value, layout string) (*dynamodb.AttributeValue, error) {
-	for v.Kind() == reflect.Pointer {
+	for v.Kind() == reflect.Ptr {
 		v = v.Elem()
 	}
 	switch v.Kind() {

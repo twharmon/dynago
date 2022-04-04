@@ -1,6 +1,6 @@
 # Dynago
 
-![](https://github.com/twharmon/dynago/workflows/Test/badge.svg) [![](https://goreportcard.com/badge/github.com/twharmon/dynago)](https://goreportcard.com/report/github.com/twharmon/dynago) [![](https://gocover.io/_badge/github.com/twharmon/dynago)](https://gocover.io/github.com/twharmon/dynago)
+![](https://github.com/twharmon/dynago/workflows/Test/badge.svg) [![](https://goreportcard.com/badge/github.com/twharmon/dynago)](https://goreportcard.com/report/github.com/twharmon/dynago) [![codecov](https://codecov.io/gh/twharmon/dynago/branch/main/graph/badge.svg?token=K0P59TPRAL)](https://codecov.io/gh/twharmon/dynago)
 
 The aim of this package is to make it easier to work with AWS DynamoDB.
 

@@ -6,12 +6,14 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 )
 
+// PutItem represents a PutItem operation.
 type PutItem struct {
 	item   interface{}
 	input  *dynamodb.PutItemInput
 	dynago *Dynago
 }
 
+// PutItem returns a PutItem operation.
 func (d *Dynago) PutItem(item interface{}) *PutItem {
 	return &PutItem{
 		input:  &dynamodb.PutItemInput{TableName: &d.config.DefaultTableName},
@@ -20,16 +22,19 @@ func (d *Dynago) PutItem(item interface{}) *PutItem {
 	}
 }
 
+// TableName sets the table.
 func (q *PutItem) TableName(table string) *PutItem {
 	q.input.TableName = &table
 	return q
 }
 
+// ConditionExpression sets the ConditionExpression.
 func (q *PutItem) ConditionExpression(exp string) *PutItem {
 	q.input.ConditionExpression = &exp
 	return q
 }
 
+// ExpressionAttributeValue sets an ExpressionAttributeValue.
 func (q *PutItem) ExpressionAttributeValue(key string, val interface{}) *PutItem {
 	if q.input.ExpressionAttributeValues == nil {
 		q.input.ExpressionAttributeValues = make(map[string]*dynamodb.AttributeValue)
@@ -38,6 +43,7 @@ func (q *PutItem) ExpressionAttributeValue(key string, val interface{}) *PutItem
 	return q
 }
 
+// ExpressionAttributeName sets an ExpressionAttributeName.
 func (q *PutItem) ExpressionAttributeName(name string, sub string) *PutItem {
 	if q.input.ExpressionAttributeNames == nil {
 		q.input.ExpressionAttributeNames = make(map[string]*string)
@@ -46,6 +52,7 @@ func (q *PutItem) ExpressionAttributeName(name string, sub string) *PutItem {
 	return q
 }
 
+// Exec exeutes the operation.
 func (q *PutItem) Exec() error {
 	var err error
 	q.input.Item, err = q.dynago.Marshal(q.item)
@@ -59,6 +66,8 @@ func (q *PutItem) Exec() error {
 	return err
 }
 
+// TransactionWriteItem implements the TransactionWriteItemer
+// interface.
 func (q *PutItem) TransactionWriteItem() (*dynamodb.TransactWriteItem, error) {
 	item, err := q.dynago.Marshal(q.item)
 	if err != nil {

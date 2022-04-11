@@ -8,12 +8,14 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 )
 
+// Query represents a Query operation.
 type Query struct {
 	input  *dynamodb.QueryInput
 	dynago *Dynago
 	items  interface{}
 }
 
+// Query returns a Query operation.
 func (d *Dynago) Query(items interface{}) *Query {
 	return &Query{
 		input: &dynamodb.QueryInput{
@@ -25,56 +27,67 @@ func (d *Dynago) Query(items interface{}) *Query {
 	}
 }
 
+// TableName sets the table.
 func (q *Query) TableName(name string) *Query {
 	q.input.TableName = &name
 	return q
 }
 
+// IndexName sets the index.
 func (q *Query) IndexName(index string) *Query {
 	q.input.IndexName = &index
 	return q
 }
 
+// Select sets which attributes will be selected.
 func (q *Query) Select(attrs string) *Query {
 	q.input.Select = &attrs
 	return q
 }
 
+// Limit sets the Limit.
 func (q *Query) Limit(limit int64) *Query {
 	q.input.Limit = &limit
 	return q
 }
 
+// ProjectionExpression sets the ProjectionExpression.
 func (q *Query) ProjectionExpression(exp string) *Query {
 	q.input.ProjectionExpression = &exp
 	return q
 }
 
+// FilterExpression sets the FilterExpression.
 func (q *Query) FilterExpression(exp string) *Query {
 	q.input.FilterExpression = &exp
 	return q
 }
 
+// ExclusiveStartKey sets the ExclusiveStartKey.
 func (q *Query) ExclusiveStartKey(key map[string]*dynamodb.AttributeValue) *Query {
 	q.input.ExclusiveStartKey = key
 	return q
 }
 
+// ScanIndexForward sets whether or not to scan index forward.
 func (q *Query) ScanIndexForward(val bool) *Query {
 	q.input.ScanIndexForward = &val
 	return q
 }
 
+// ConsistentRead sets ConsistentRead.
 func (q *Query) ConsistentRead(val bool) *Query {
 	q.input.ConsistentRead = &val
 	return q
 }
 
+// KeyConditionExpression sets the KeyConditionExpression.
 func (q *Query) KeyConditionExpression(exp string) *Query {
 	q.input.KeyConditionExpression = &exp
 	return q
 }
 
+// ExpressionAttributeValue sets an ExpressionAttributeValue.
 func (q *Query) ExpressionAttributeValue(key string, val interface{}) *Query {
 	if q.input.ExpressionAttributeValues == nil {
 		q.input.ExpressionAttributeValues = make(map[string]*dynamodb.AttributeValue)
@@ -83,6 +96,7 @@ func (q *Query) ExpressionAttributeValue(key string, val interface{}) *Query {
 	return q
 }
 
+// ExpressionAttributeName sets an ExpressionAttributeName.
 func (q *Query) ExpressionAttributeName(name string, sub string) *Query {
 	if q.input.ExpressionAttributeNames == nil {
 		q.input.ExpressionAttributeNames = make(map[string]*string)
@@ -91,6 +105,7 @@ func (q *Query) ExpressionAttributeName(name string, sub string) *Query {
 	return q
 }
 
+// Exec executes the operation.
 func (q *Query) Exec() error {
 	rv := reflect.ValueOf(q.items)
 	if rv.Kind() != reflect.Ptr {

@@ -6,12 +6,14 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 )
 
+// UpdateItem represents an UpdateItem operation.
 type UpdateItem struct {
 	item   interface{}
 	input  *dynamodb.UpdateItemInput
 	dynago *Dynago
 }
 
+// UpdateItem retusn an UpdateItem operation.
 func (d *Dynago) UpdateItem(item interface{}) *UpdateItem {
 	return &UpdateItem{
 		input:  &dynamodb.UpdateItemInput{TableName: &d.config.DefaultTableName},
@@ -20,21 +22,25 @@ func (d *Dynago) UpdateItem(item interface{}) *UpdateItem {
 	}
 }
 
+// TableName sets the TableName.
 func (q *UpdateItem) TableName(table string) *UpdateItem {
 	q.input.TableName = &table
 	return q
 }
 
+// UpdateExpression sets the UpdateExpression.
 func (q *UpdateItem) UpdateExpression(exp string) *UpdateItem {
 	q.input.UpdateExpression = &exp
 	return q
 }
 
+// ConditionExpression sets the ConditionExpression.
 func (q *UpdateItem) ConditionExpression(exp string) *UpdateItem {
 	q.input.ConditionExpression = &exp
 	return q
 }
 
+// ExpressionAttributeValue sets an ExpressionAttributeValue.
 func (q *UpdateItem) ExpressionAttributeValue(key string, val interface{}) *UpdateItem {
 	if q.input.ExpressionAttributeValues == nil {
 		q.input.ExpressionAttributeValues = make(map[string]*dynamodb.AttributeValue)
@@ -43,6 +49,7 @@ func (q *UpdateItem) ExpressionAttributeValue(key string, val interface{}) *Upda
 	return q
 }
 
+// ExpressionAttributeName sets an ExpressionAttributeName.
 func (q *UpdateItem) ExpressionAttributeName(name string, sub string) *UpdateItem {
 	if q.input.ExpressionAttributeNames == nil {
 		q.input.ExpressionAttributeNames = make(map[string]*string)
@@ -51,6 +58,7 @@ func (q *UpdateItem) ExpressionAttributeName(name string, sub string) *UpdateIte
 	return q
 }
 
+// Exec executes the operation.
 func (q *UpdateItem) Exec() error {
 	var err error
 	q.input.Key, err = q.dynago.key(q.item)
@@ -64,6 +72,8 @@ func (q *UpdateItem) Exec() error {
 	return err
 }
 
+// TransactionWriteItem implements the TransactionWriteItemer
+// interface.
 func (q *UpdateItem) TransactionWriteItem() (*dynamodb.TransactWriteItem, error) {
 	var err error
 	q.input.Key, err = q.dynago.key(q.item)

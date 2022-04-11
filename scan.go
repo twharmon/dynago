@@ -8,12 +8,14 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 )
 
+// Scan represents a Scan operation.
 type Scan struct {
 	input  *dynamodb.ScanInput
 	dynago *Dynago
 	items  interface{}
 }
 
+// Scan returns a Scan operation.
 func (d *Dynago) Scan(items interface{}) *Scan {
 	return &Scan{
 		input: &dynamodb.ScanInput{
@@ -25,56 +27,67 @@ func (d *Dynago) Scan(items interface{}) *Scan {
 	}
 }
 
+// TableName sets the table.
 func (q *Scan) TableName(name string) *Scan {
 	q.input.TableName = &name
 	return q
 }
 
+// Segment sets Segment.
 func (q *Scan) Segment(segment int64) *Scan {
 	q.input.Segment = &segment
 	return q
 }
 
+// TotalSegments sets TotalSegments.
 func (q *Scan) TotalSegments(segments int64) *Scan {
 	q.input.TotalSegments = &segments
 	return q
 }
 
+// IndexName sets the IndexName.
 func (q *Scan) IndexName(index string) *Scan {
 	q.input.IndexName = &index
 	return q
 }
 
+// Select sets which attributes will be selected.
 func (q *Scan) Select(attrs string) *Scan {
 	q.input.Select = &attrs
 	return q
 }
 
+// Limit sets the Limit.
 func (q *Scan) Limit(limit int64) *Scan {
 	q.input.Limit = &limit
 	return q
 }
 
+// ProjectionExpression sets the ProjectionExpression.
 func (q *Scan) ProjectionExpression(exp string) *Scan {
 	q.input.ProjectionExpression = &exp
 	return q
 }
 
+// FilterExpression sets the FilterExpression.
 func (q *Scan) FilterExpression(exp string) *Scan {
 	q.input.FilterExpression = &exp
 	return q
 }
 
+// ExclusiveStartKey sets the ExclusiveStartKey.
 func (q *Scan) ExclusiveStartKey(key map[string]*dynamodb.AttributeValue) *Scan {
 	q.input.ExclusiveStartKey = key
 	return q
 }
 
+// ConsistentRead sets ConsistentRead.
 func (q *Scan) ConsistentRead(val bool) *Scan {
 	q.input.ConsistentRead = &val
 	return q
 }
 
+// ExpressionAttributeValue sets an ExpressionAttributeValue.
 func (q *Scan) ExpressionAttributeValue(key string, val interface{}) *Scan {
 	if q.input.ExpressionAttributeValues == nil {
 		q.input.ExpressionAttributeValues = make(map[string]*dynamodb.AttributeValue)
@@ -83,6 +96,7 @@ func (q *Scan) ExpressionAttributeValue(key string, val interface{}) *Scan {
 	return q
 }
 
+// ExpressionAttributeName sets an ExpressionAttributeName.
 func (q *Scan) ExpressionAttributeName(name string, sub string) *Scan {
 	if q.input.ExpressionAttributeNames == nil {
 		q.input.ExpressionAttributeNames = make(map[string]*string)
@@ -91,6 +105,7 @@ func (q *Scan) ExpressionAttributeName(name string, sub string) *Scan {
 	return q
 }
 
+// Exec executes the operation.
 func (q *Scan) Exec() error {
 	rv := reflect.ValueOf(q.items)
 	if rv.Kind() != reflect.Ptr {

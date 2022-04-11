@@ -6,12 +6,14 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 )
 
+// DeleteItem represents a delete item operation.
 type DeleteItem struct {
 	item   interface{}
 	input  *dynamodb.DeleteItemInput
 	dynago *Dynago
 }
 
+// DeleteItem creates a DeleteItem operation.
 func (d *Dynago) DeleteItem(item interface{}) *DeleteItem {
 	return &DeleteItem{
 		item: item,
@@ -22,11 +24,13 @@ func (d *Dynago) DeleteItem(item interface{}) *DeleteItem {
 	}
 }
 
+// TableName sets the table.
 func (q *DeleteItem) TableName(name string) *DeleteItem {
 	q.input.TableName = &name
 	return q
 }
 
+// ExpressionAttributeValue sets an ExpressionAttributeValue.
 func (q *DeleteItem) ExpressionAttributeValue(key string, val interface{}) *DeleteItem {
 	if q.input.ExpressionAttributeValues == nil {
 		q.input.ExpressionAttributeValues = make(map[string]*dynamodb.AttributeValue)
@@ -35,11 +39,13 @@ func (q *DeleteItem) ExpressionAttributeValue(key string, val interface{}) *Dele
 	return q
 }
 
+// ConditionExpression sets the ConditionExpression.
 func (q *DeleteItem) ConditionExpression(exp string) *DeleteItem {
 	q.input.ConditionExpression = &exp
 	return q
 }
 
+// ExpressionAttributeName sets a ExpressionAttributeName.
 func (q *DeleteItem) ExpressionAttributeName(name string, sub string) *DeleteItem {
 	if q.input.ExpressionAttributeNames == nil {
 		q.input.ExpressionAttributeNames = make(map[string]*string)
@@ -48,6 +54,7 @@ func (q *DeleteItem) ExpressionAttributeName(name string, sub string) *DeleteIte
 	return q
 }
 
+// Exec executes the operation.
 func (q *DeleteItem) Exec() error {
 	var err error
 	q.input.Key, err = q.dynago.key(q.item)
@@ -61,6 +68,8 @@ func (q *DeleteItem) Exec() error {
 	return nil
 }
 
+// TransactionWriteItem implements the TransactionWriteItemer
+// interface.
 func (q *DeleteItem) TransactionWriteItem() (*dynamodb.TransactWriteItem, error) {
 	key, err := q.dynago.key(q.item)
 	if err != nil {

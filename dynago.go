@@ -9,6 +9,9 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
 )
 
+// DynagoAPI provides an interface to enable mocking the
+// dynago.Dynago service client's API operations. This make unit
+// testing your code easier.
 type DynagoAPI interface {
 	DeleteItem(interface{}) *DeleteItem
 	PutItem(interface{}) *PutItem
@@ -22,6 +25,7 @@ type DynagoAPI interface {
 	Unmarshal(map[string]*dynamodb.AttributeValue, interface{}) error
 }
 
+// Dynago is
 type Dynago struct {
 	config   *Config
 	cache    map[string]map[int]*field
@@ -72,6 +76,8 @@ type Config struct {
 	DefaultConsistentRead bool
 }
 
+// New creates a new Dynago client. An optional config can be passed
+// in second argument.
 func New(ddb dynamodbiface.DynamoDBAPI, config ...*Config) *Dynago {
 	d := Dynago{
 		cache:  make(map[string]map[int]*field),
@@ -105,6 +111,7 @@ func New(ddb dynamodbiface.DynamoDBAPI, config ...*Config) *Dynago {
 	return &d
 }
 
+// Unmarshal converts a DynamoDB item into a Go struct.
 func (d *Dynago) Unmarshal(item map[string]*dynamodb.AttributeValue, v interface{}) error {
 	ty, val := tyVal(v)
 	cache, err := d.cachedStruct(ty)
@@ -122,6 +129,7 @@ func (d *Dynago) Unmarshal(item map[string]*dynamodb.AttributeValue, v interface
 	return nil
 }
 
+// Marshal converts a Go struct into a DynamoDB item.
 func (d *Dynago) Marshal(v interface{}) (map[string]*dynamodb.AttributeValue, error) {
 	m := make(map[string]*dynamodb.AttributeValue)
 	ty, val := tyVal(v)

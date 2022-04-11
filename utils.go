@@ -274,8 +274,6 @@ func formatFloat[T Float](f T) string {
 	case float64:
 		s = strconv.FormatFloat(val, 'f', -1, 64)
 	}
-	// s = strings.TrimRight(s, "0")
-	// s = strings.TrimRight(s, ".")
 	return s
 }
 

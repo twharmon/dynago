@@ -25,7 +25,7 @@ import (
 
 type Post struct {
 	// Set attribute name with `attr` tag if it needs to be different
-	// that field name. Specify that this attribute is part of
+	// than field name. Specify that this attribute is part of
 	// primary key with `idx:"primary"`. Use `fmt:"Post#{}"` to
 	// indicate how the value will be stored in DynamoDB.
 	ID string `idx:"primary" attr:"PK" fmt:"Post#{}"`

@@ -77,8 +77,11 @@ func (q *DeleteItem) TransactionWriteItem() (*dynamodb.TransactWriteItem, error)
 	}
 	return &dynamodb.TransactWriteItem{
 		Delete: &dynamodb.Delete{
-			Key:       key,
-			TableName: q.input.TableName,
+			Key:                       key,
+			TableName:                 q.input.TableName,
+			ConditionExpression:       q.input.ConditionExpression,
+			ExpressionAttributeNames:  q.input.ExpressionAttributeNames,
+			ExpressionAttributeValues: q.input.ExpressionAttributeValues,
 		},
 	}, nil
 }

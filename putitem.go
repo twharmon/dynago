@@ -75,8 +75,11 @@ func (q *PutItem) TransactionWriteItem() (*dynamodb.TransactWriteItem, error) {
 	}
 	return &dynamodb.TransactWriteItem{
 		Put: &dynamodb.Put{
-			Item:      item,
-			TableName: q.input.TableName,
+			Item:                      item,
+			TableName:                 q.input.TableName,
+			ConditionExpression:       q.input.ConditionExpression,
+			ExpressionAttributeNames:  q.input.ExpressionAttributeNames,
+			ExpressionAttributeValues: q.input.ExpressionAttributeValues,
 		},
 	}, nil
 }

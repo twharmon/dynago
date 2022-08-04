@@ -1554,6 +1554,26 @@ func TestMarshalWithAdditionalAttributes(t *testing.T) {
 	assertEq(t, want, got)
 }
 
+func TestMarshalWithUnexportedMember(t *testing.T) {
+	type Person struct {
+		Name string
+		age  int
+	}
+	person := Person{
+		Name: "John Doe",
+		age:  13,
+	}
+	want := map[string]*dynamodb.AttributeValue{
+		"Name": {S: &person.Name},
+	}
+	client := dynago.New(nil)
+	got, err := client.Marshal(&person)
+	if err != nil {
+		t.Fatalf("unexpected err: %s", err)
+	}
+	assertEq(t, want, got)
+}
+
 func BenchmarkMarshal(b *testing.B) {
 	type Person struct {
 		Name       string  `attr:"name" fmt:"Person#{Name}"`

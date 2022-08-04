@@ -31,10 +31,15 @@ func (d *Dynago) field(sf reflect.StructField, index int) (*field, error) {
 	var f field
 	f.index = index
 	f.client = d
-	if tag, ok := sf.Tag.Lookup(d.config.AttrTagName); ok {
-		f.attrName = tag
+	if sf.IsExported() {
+		if tag, ok := sf.Tag.Lookup(d.config.AttrTagName); ok {
+			f.attrName = tag
+		} else {
+			f.attrName = sf.Name
+		}
 	} else {
-		f.attrName = sf.Name
+		f.attrName = "-"
+		return &f, nil
 	}
 	ty := sf.Type
 	for ty.Kind() == reflect.Ptr {

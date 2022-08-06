@@ -200,12 +200,17 @@ func TestUnmarshalStringFmt(t *testing.T) {
 }
 
 func TestMarshalStruct(t *testing.T) {
+	addAtts := func(item map[string]*dynamodb.AttributeValue, v reflect.Value) {
+		ty := v.Type().Name()
+		item["Type"] = &dynamodb.AttributeValue{S: &ty}
+	}
+
 	type Pet struct {
 		Type string
 		Age  int64 `attr:"AGE"`
 	}
 	type Person struct {
-		Name string
+		Name string `idx:"primary"`
 		Pet  *Pet
 	}
 	p := Person{
@@ -221,8 +226,11 @@ func TestMarshalStruct(t *testing.T) {
 			"Type": {S: &p.Pet.Type},
 			"AGE":  {N: aws.String(strconv.FormatInt(p.Pet.Age, 10))},
 		}},
+		"Type": {S: aws.String("Person")},
 	}
-	client := dynago.New(nil)
+	client := dynago.New(nil, &dynago.Config{
+		AdditionalAttrs: addAtts,
+	})
 	got, err := client.Marshal(&p)
 	if err != nil {
 		t.Fatalf("unexpected err: %s", err)
@@ -1530,7 +1538,7 @@ func TestUnmarshalTimeWithLayoutTag(t *testing.T) {
 
 func TestMarshalWithAdditionalAttributes(t *testing.T) {
 	type Person struct {
-		Name string
+		Name string `idx:"primary"`
 	}
 	client := dynago.New(nil, &dynago.Config{
 		AdditionalAttrs: func(item map[string]*dynamodb.AttributeValue, v reflect.Value) {

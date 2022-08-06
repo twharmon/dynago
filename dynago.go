@@ -137,6 +137,7 @@ func (d *Dynago) Marshal(v interface{}) (map[string]*dynamodb.AttributeValue, er
 	if err != nil {
 		return nil, fmt.Errorf("d.cachedStruct: %w", err)
 	}
+	isTopLevel := false
 	for i := 0; i < ty.NumField(); i++ {
 		if cache[i].attrName == "-" {
 			continue
@@ -148,6 +149,9 @@ func (d *Dynago) Marshal(v interface{}) (map[string]*dynamodb.AttributeValue, er
 		if attrVal == nil {
 			continue
 		}
+		if !isTopLevel && cache[i].tableIndex != "" {
+			isTopLevel = true
+		}
 		m[cache[i].attrName] = attrVal
 		for _, cp := range cache[i].attrsToCopy {
 			m[cp] = attrVal
@@ -156,7 +160,7 @@ func (d *Dynago) Marshal(v interface{}) (map[string]*dynamodb.AttributeValue, er
 			m[cache[i].attrToCopyIdx] = attrVal
 		}
 	}
-	if d.config.AdditionalAttrs != nil {
+	if isTopLevel && d.config.AdditionalAttrs != nil {
 		d.config.AdditionalAttrs(m, val)
 	}
 	return m, nil

@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/service/dynamodb"
+	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 )
 
 func tyVal(v interface{}) (reflect.Type, reflect.Value) {
@@ -168,6 +169,12 @@ func (d *Dynago) simpleUnmarshal(v reflect.Value, av *dynamodb.AttributeValue, l
 		if av.BOOL != nil {
 			v.Set(reflect.ValueOf(*av.BOOL))
 		}
+	case reflect.Map:
+		if av.M != nil {
+			if err := dynamodbattribute.UnmarshalMap(av.M, v.Addr().Interface()); err != nil {
+				return err
+			}
+		}
 	}
 	return nil
 }
@@ -257,6 +264,9 @@ func (d *Dynago) simpleMarshal(v reflect.Value, layout string) (*dynamodb.Attrib
 	case reflect.Bool:
 		val := v.Interface().(bool)
 		return &dynamodb.AttributeValue{BOOL: &val}, nil
+	case reflect.Map:
+		av, err := dynamodbattribute.MarshalMap(v.Interface())
+		return &dynamodb.AttributeValue{M: av}, err
 	default:
 		return nil, nil
 	}

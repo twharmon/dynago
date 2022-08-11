@@ -14,7 +14,7 @@ func TestTransactWriteItemsBasic(t *testing.T) {
 	ddb := mock(t)
 	client := dynago.New(ddb)
 	type Person struct {
-		Name string `idx:"primary" attr:"PK" fmt:"Person#{}" idx:"primary"`
+		Name string `idx:"primary" attr:"PK" fmt:"Person#{}"`
 		Age  int64
 	}
 	p := Person{

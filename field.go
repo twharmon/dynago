@@ -81,7 +81,7 @@ func (d *Dynago) field(sf reflect.StructField, index int) (*field, error) {
 	f.fmtRegExps = make(map[string]*regexp.Regexp)
 	for _, match := range fmtRegExp.FindAllString(f.fmt, -1) {
 		fname := trimDelims(match)
-		f.fmtRegExps[fname] = regexp.MustCompile("^" + fmtRegExp.ReplaceAllString(strings.ReplaceAll(f.fmt, match, "(.*?)"), ".*?") + "$")
+		f.fmtRegExps[fname] = regexp.MustCompile("(?s)^" + fmtRegExp.ReplaceAllString(strings.ReplaceAll(f.fmt, match, "(.*?)"), ".*?") + "$")
 	}
 	if tag, ok := sf.Tag.Lookup(d.config.LayoutTagName); ok {
 		f.layout = tag

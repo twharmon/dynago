@@ -219,3 +219,40 @@ func TestGetItemDefaultTableName(t *testing.T) {
 	assertEq(t, want, got)
 	ddb.done()
 }
+
+func TestGetItemWithMultilineField(t *testing.T) {
+	ddb := mock(t)
+	client := dynago.New(ddb)
+	type Person struct {
+		Name string `idx:"primary" attr:"PK" fmt:"Person#{}" copyidx:"SK"`
+		Text string
+	}
+	text := "foo\nbar"
+	want := Person{
+		Name: "foo",
+		Text: text,
+	}
+	tableName := "bar"
+	ddb.MockGet(&dynamodb.GetItemInput{
+		Key: map[string]*dynamodb.AttributeValue{
+			"PK": {S: aws.String(fmt.Sprintf("Person#%s", want.Name))},
+			"SK": {S: aws.String(fmt.Sprintf("Person#%s", want.Name))},
+		},
+		TableName:      &tableName,
+		ConsistentRead: aws.Bool(false),
+	}, &dynamodb.GetItemOutput{
+		Item: map[string]*dynamodb.AttributeValue{
+			"PK":   {S: aws.String(fmt.Sprintf("Person#%s", want.Name))},
+			"SK":   {S: aws.String(fmt.Sprintf("Person#%s", want.Name))},
+			"Text": {S: &text},
+		},
+	})
+	got := Person{
+		Name: want.Name,
+	}
+	if err := client.GetItem(&got).TableName(tableName).Exec(); err != nil {
+		t.Fatalf("unexpected err: %s", err)
+	}
+	assertEq(t, want, got)
+	ddb.done()
+}

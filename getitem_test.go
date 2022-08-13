@@ -154,7 +154,7 @@ func TestGetItemCopy(t *testing.T) {
 	ddb := mock(t)
 	client := dynago.New(ddb)
 	type Person struct {
-		Name string `idx:"primary" attr:"PK" fmt:"Person#{}" copyidx:"SK"`
+		Name string `idx:"primary" attr:"PK" fmt:"Person#{}" copyidx:"SK" copy:"SK"`
 		Age  int64
 	}
 	want := Person{
@@ -177,6 +177,45 @@ func TestGetItemCopy(t *testing.T) {
 		},
 	})
 	got := Person{
+		Name: want.Name,
+	}
+	if err := client.GetItem(&got).TableName(tableName).Exec(); err != nil {
+		t.Fatalf("unexpected err: %s", err)
+	}
+	assertEq(t, want, got)
+	ddb.done()
+}
+
+func TestGetItemCopyIdx(t *testing.T) {
+	ddb := mock(t)
+	client := dynago.New(ddb)
+	type Person struct {
+		ID   string `idx:"primary" attr:"PK" fmt:"Person#{}" copyidx:"SK" copy:"GSISK"`
+		Name string `attr:"SK" fmt:"Name#{}" copy:"GSIPK"`
+		Age  int64
+	}
+	want := Person{
+		ID:   "bar",
+		Name: "foo",
+		Age:  33,
+	}
+	tableName := "bar"
+	ddb.MockGet(&dynamodb.GetItemInput{
+		Key: map[string]*dynamodb.AttributeValue{
+			"PK": {S: aws.String(fmt.Sprintf("Person#%s", want.ID))},
+			"SK": {S: aws.String(fmt.Sprintf("Name#%s", want.Name))},
+		},
+		TableName:      &tableName,
+		ConsistentRead: aws.Bool(false),
+	}, &dynamodb.GetItemOutput{
+		Item: map[string]*dynamodb.AttributeValue{
+			"PK":  {S: aws.String(fmt.Sprintf("Person#%s", want.ID))},
+			"SK":  {S: aws.String(fmt.Sprintf("Name#%s", want.Name))},
+			"Age": {N: aws.String(strconv.FormatInt(want.Age, 10))},
+		},
+	})
+	got := Person{
+		ID:   want.ID,
 		Name: want.Name,
 	}
 	if err := client.GetItem(&got).TableName(tableName).Exec(); err != nil {
@@ -224,7 +263,7 @@ func TestGetItemWithMultilineField(t *testing.T) {
 	ddb := mock(t)
 	client := dynago.New(ddb)
 	type Person struct {
-		Name string `idx:"primary" attr:"PK" fmt:"Person#{}" copyidx:"SK"`
+		Name string `idx:"primary" attr:"PK" fmt:"Person#{}" copyidx:"SK" copy:"SK"`
 		Text string
 	}
 	text := "foo\nbar"

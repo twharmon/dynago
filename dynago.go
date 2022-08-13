@@ -7,6 +7,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
+	"github.com/twharmon/slices"
 )
 
 // DynagoAPI provides an interface to enable mocking the
@@ -156,9 +157,6 @@ func (d *Dynago) Marshal(v interface{}) (map[string]*dynamodb.AttributeValue, er
 		for _, cp := range cache[i].attrsToCopy {
 			m[cp] = attrVal
 		}
-		if cache[i].attrToCopyIdx != "" {
-			m[cache[i].attrToCopyIdx] = attrVal
-		}
 	}
 	if isTopLevel && d.config.AdditionalAttrs != nil {
 		d.config.AdditionalAttrs(m, val)
@@ -188,8 +186,18 @@ func (d *Dynago) key(v interface{}) (map[string]*dynamodb.AttributeValue, error)
 			continue
 		}
 		m[cache[i].attrName] = attrVal
-		if cache[i].attrToCopyIdx != "" {
-			m[cache[i].attrToCopyIdx] = attrVal
+		// TODO: any way to avoid nested loop?
+		if copyIdx := cache[i].attrToCopyIdx; copyIdx != "" {
+			for j := 0; j < ty.NumField(); j++ {
+				if cache[j].attrName == copyIdx || slices.Contains(cache[j].attrsToCopy, copyIdx) {
+					av, err := cache[j].attrVal(val)
+					if err != nil {
+						return nil, fmt.Errorf("cache.attrVal: %w", err)
+					}
+					m[copyIdx] = av
+					break
+				}
+			}
 		}
 	}
 	return m, nil

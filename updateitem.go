@@ -2,6 +2,8 @@ package dynago
 
 import (
 	"fmt"
+	"reflect"
+	"time"
 
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 )
@@ -11,6 +13,7 @@ type UpdateItem struct {
 	item   interface{}
 	input  *dynamodb.UpdateItemInput
 	dynago *Dynago
+	err    error
 }
 
 // UpdateItem retusn an UpdateItem operation.
@@ -41,11 +44,19 @@ func (q *UpdateItem) ConditionExpression(exp string) *UpdateItem {
 }
 
 // ExpressionAttributeValue sets an ExpressionAttributeValue.
-func (q *UpdateItem) ExpressionAttributeValue(key string, val interface{}) *UpdateItem {
+func (q *UpdateItem) ExpressionAttributeValue(key string, val interface{}, layout ...string) *UpdateItem {
 	if q.input.ExpressionAttributeValues == nil {
 		q.input.ExpressionAttributeValues = make(map[string]*dynamodb.AttributeValue)
 	}
-	expressionAttributeValue(q.input.ExpressionAttributeValues, key, val)
+	lay := time.RFC3339
+	if len(layout) > 0 {
+		lay = layout[0]
+	}
+	av, err := q.dynago.simpleMarshal(reflect.ValueOf(val), lay)
+	if err != nil {
+		q.err = err
+	}
+	q.input.ExpressionAttributeValues[key] = av
 	return q
 }
 
@@ -60,6 +71,9 @@ func (q *UpdateItem) ExpressionAttributeName(name string, sub string) *UpdateIte
 
 // Exec executes the operation.
 func (q *UpdateItem) Exec() error {
+	if q.err != nil {
+		return q.err
+	}
 	var err error
 	q.input.Key, err = q.dynago.key(q.item)
 	if err != nil {
@@ -75,6 +89,9 @@ func (q *UpdateItem) Exec() error {
 // TransactionWriteItem implements the TransactionWriteItemer
 // interface.
 func (q *UpdateItem) TransactionWriteItem() (*dynamodb.TransactWriteItem, error) {
+	if q.err != nil {
+		return nil, q.err
+	}
 	var err error
 	q.input.Key, err = q.dynago.key(q.item)
 	if err != nil {

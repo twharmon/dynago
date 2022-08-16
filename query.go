@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"time"
 
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 )
@@ -13,6 +14,7 @@ type Query struct {
 	input  *dynamodb.QueryInput
 	dynago *Dynago
 	items  interface{}
+	err    error
 }
 
 // Query returns a Query operation.
@@ -88,11 +90,19 @@ func (q *Query) KeyConditionExpression(exp string) *Query {
 }
 
 // ExpressionAttributeValue sets an ExpressionAttributeValue.
-func (q *Query) ExpressionAttributeValue(key string, val interface{}) *Query {
+func (q *Query) ExpressionAttributeValue(key string, val interface{}, layout ...string) *Query {
 	if q.input.ExpressionAttributeValues == nil {
 		q.input.ExpressionAttributeValues = make(map[string]*dynamodb.AttributeValue)
 	}
-	expressionAttributeValue(q.input.ExpressionAttributeValues, key, val)
+	lay := time.RFC3339
+	if len(layout) > 0 {
+		lay = layout[0]
+	}
+	av, err := q.dynago.simpleMarshal(reflect.ValueOf(val), lay)
+	if err != nil {
+		q.err = err
+	}
+	q.input.ExpressionAttributeValues[key] = av
 	return q
 }
 
@@ -107,6 +117,9 @@ func (q *Query) ExpressionAttributeName(name string, sub string) *Query {
 
 // Exec executes the operation.
 func (q *Query) Exec() error {
+	if q.err != nil {
+		return q.err
+	}
 	rv := reflect.ValueOf(q.items)
 	if rv.Kind() != reflect.Ptr {
 		return errors.New("dynago: dynago.Query.Exec: v must be pointer")

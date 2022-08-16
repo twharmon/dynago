@@ -2,6 +2,8 @@ package dynago
 
 import (
 	"fmt"
+	"reflect"
+	"time"
 
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 )
@@ -11,6 +13,7 @@ type DeleteItem struct {
 	item   interface{}
 	input  *dynamodb.DeleteItemInput
 	dynago *Dynago
+	err    error
 }
 
 // DeleteItem creates a DeleteItem operation.
@@ -31,11 +34,19 @@ func (q *DeleteItem) TableName(name string) *DeleteItem {
 }
 
 // ExpressionAttributeValue sets an ExpressionAttributeValue.
-func (q *DeleteItem) ExpressionAttributeValue(key string, val interface{}) *DeleteItem {
+func (q *DeleteItem) ExpressionAttributeValue(key string, val interface{}, layout ...string) *DeleteItem {
 	if q.input.ExpressionAttributeValues == nil {
 		q.input.ExpressionAttributeValues = make(map[string]*dynamodb.AttributeValue)
 	}
-	expressionAttributeValue(q.input.ExpressionAttributeValues, key, val)
+	lay := time.RFC3339
+	if len(layout) > 0 {
+		lay = layout[0]
+	}
+	av, err := q.dynago.simpleMarshal(reflect.ValueOf(val), lay)
+	if err != nil {
+		q.err = err
+	}
+	q.input.ExpressionAttributeValues[key] = av
 	return q
 }
 
@@ -56,6 +67,9 @@ func (q *DeleteItem) ExpressionAttributeName(name string, sub string) *DeleteIte
 
 // Exec executes the operation.
 func (q *DeleteItem) Exec() error {
+	if q.err != nil {
+		return q.err
+	}
 	var err error
 	q.input.Key, err = q.dynago.key(q.item)
 	if err != nil {
@@ -71,6 +85,9 @@ func (q *DeleteItem) Exec() error {
 // TransactionWriteItem implements the TransactionWriteItemer
 // interface.
 func (q *DeleteItem) TransactionWriteItem() (*dynamodb.TransactWriteItem, error) {
+	if q.err != nil {
+		return nil, q.err
+	}
 	key, err := q.dynago.key(q.item)
 	if err != nil {
 		return nil, err

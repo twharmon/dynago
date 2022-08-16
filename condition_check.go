@@ -2,6 +2,8 @@ package dynago
 
 import (
 	"fmt"
+	"reflect"
+	"time"
 
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 )
@@ -13,6 +15,7 @@ type ConditionCheck struct {
 	check  *dynamodb.ConditionCheck
 	item   interface{}
 	dynago *Dynago
+	err    error
 }
 
 // ConditionCheck creates a ConditionCheck operation. The given item
@@ -40,11 +43,19 @@ func (q *ConditionCheck) ConditionExpression(exp string) *ConditionCheck {
 }
 
 // ExpressionAttributeValue sets an ExpressionAttributeValue.
-func (q *ConditionCheck) ExpressionAttributeValue(key string, val interface{}) *ConditionCheck {
+func (q *ConditionCheck) ExpressionAttributeValue(key string, val interface{}, layout ...string) *ConditionCheck {
 	if q.check.ExpressionAttributeValues == nil {
 		q.check.ExpressionAttributeValues = make(map[string]*dynamodb.AttributeValue)
 	}
-	expressionAttributeValue(q.check.ExpressionAttributeValues, key, val)
+	lay := time.RFC3339
+	if len(layout) > 0 {
+		lay = layout[0]
+	}
+	av, err := q.dynago.simpleMarshal(reflect.ValueOf(val), lay)
+	if err != nil {
+		q.err = err
+	}
+	q.check.ExpressionAttributeValues[key] = av
 	return q
 }
 
@@ -60,6 +71,9 @@ func (q *ConditionCheck) ExpressionAttributeName(name string, sub string) *Condi
 // TransactionWriteItem implements the TransactionWriteItemer
 // interface.
 func (c *ConditionCheck) TransactionWriteItem() (*dynamodb.TransactWriteItem, error) {
+	if c.err != nil {
+		return nil, c.err
+	}
 	var err error
 	c.check.Key, err = c.dynago.key(c.item)
 	if err != nil {

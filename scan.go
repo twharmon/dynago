@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"time"
 
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 )
@@ -13,6 +14,7 @@ type Scan struct {
 	input  *dynamodb.ScanInput
 	dynago *Dynago
 	items  interface{}
+	err    error
 }
 
 // Scan returns a Scan operation.
@@ -88,11 +90,19 @@ func (q *Scan) ConsistentRead(val bool) *Scan {
 }
 
 // ExpressionAttributeValue sets an ExpressionAttributeValue.
-func (q *Scan) ExpressionAttributeValue(key string, val interface{}) *Scan {
+func (q *Scan) ExpressionAttributeValue(key string, val interface{}, layout ...string) *Scan {
 	if q.input.ExpressionAttributeValues == nil {
 		q.input.ExpressionAttributeValues = make(map[string]*dynamodb.AttributeValue)
 	}
-	expressionAttributeValue(q.input.ExpressionAttributeValues, key, val)
+	lay := time.RFC3339
+	if len(layout) > 0 {
+		lay = layout[0]
+	}
+	av, err := q.dynago.simpleMarshal(reflect.ValueOf(val), lay)
+	if err != nil {
+		q.err = err
+	}
+	q.input.ExpressionAttributeValues[key] = av
 	return q
 }
 

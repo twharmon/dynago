@@ -5,7 +5,6 @@ import (
 	"reflect"
 	"strconv"
 
-	// "strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/service/dynamodb"
@@ -285,47 +284,4 @@ func formatFloat[T Float](f T) string {
 		s = strconv.FormatFloat(val, 'f', -1, 64)
 	}
 	return s
-}
-
-func expressionAttributeValue(m map[string]*dynamodb.AttributeValue, key string, val interface{}) {
-	switch v := val.(type) {
-	case string:
-		m[key] = &dynamodb.AttributeValue{S: &v}
-	case int:
-		s := strconv.FormatInt(int64(v), 10)
-		m[key] = &dynamodb.AttributeValue{N: &s}
-	case uint:
-		s := strconv.FormatInt(int64(v), 10)
-		m[key] = &dynamodb.AttributeValue{N: &s}
-	case int8:
-		s := strconv.FormatInt(int64(v), 10)
-		m[key] = &dynamodb.AttributeValue{N: &s}
-	case int16:
-		s := strconv.FormatInt(int64(v), 10)
-		m[key] = &dynamodb.AttributeValue{N: &s}
-	case int32:
-		s := strconv.FormatInt(int64(v), 10)
-		m[key] = &dynamodb.AttributeValue{N: &s}
-	case int64:
-		s := strconv.FormatInt(v, 10)
-		m[key] = &dynamodb.AttributeValue{N: &s}
-	case uint8:
-		s := strconv.FormatInt(int64(v), 10)
-		m[key] = &dynamodb.AttributeValue{N: &s}
-	case uint16:
-		s := strconv.FormatInt(int64(v), 10)
-		m[key] = &dynamodb.AttributeValue{N: &s}
-	case uint32:
-		s := strconv.FormatInt(int64(v), 10)
-		m[key] = &dynamodb.AttributeValue{N: &s}
-	case uint64:
-		s := strconv.FormatInt(int64(v), 10)
-		m[key] = &dynamodb.AttributeValue{N: &s}
-	case float32:
-		s := formatFloat(v)
-		m[key] = &dynamodb.AttributeValue{N: &s}
-	case float64:
-		s := formatFloat(v)
-		m[key] = &dynamodb.AttributeValue{N: &s}
-	}
 }

@@ -114,7 +114,11 @@ func (d *Dynago) simpleUnmarshal(v reflect.Value, av *dynamodb.AttributeValue, l
 			if err != nil {
 				return err
 			}
-			v.Set(reflect.ValueOf(i))
+			if v.Type() == durationType {
+				v.Set(reflect.ValueOf(time.Duration(i)))
+			} else {
+				v.Set(reflect.ValueOf(i))
+			}
 		}
 	case reflect.Uint8:
 		if av.N != nil {

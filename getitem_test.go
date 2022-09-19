@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strconv"
 	"testing"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
@@ -284,6 +285,40 @@ func TestGetItemWithMultilineField(t *testing.T) {
 			"PK":   {S: aws.String(fmt.Sprintf("Person#%s", want.Name))},
 			"SK":   {S: aws.String(fmt.Sprintf("Person#%s", want.Name))},
 			"Text": {S: &text},
+		},
+	})
+	got := Person{
+		Name: want.Name,
+	}
+	if err := client.GetItem(&got).TableName(tableName).Exec(); err != nil {
+		t.Fatalf("unexpected err: %s", err)
+	}
+	assertEq(t, want, got)
+	ddb.done()
+}
+
+func TestGetItemDuration(t *testing.T) {
+	ddb := mock(t)
+	client := dynago.New(ddb)
+	type Person struct {
+		Name string `idx:"primary" attr:"PK" fmt:"Person#{}"`
+		Age  time.Duration
+	}
+	want := Person{
+		Name: "foo",
+		Age:  33,
+	}
+	tableName := "bar"
+	ddb.MockGet(&dynamodb.GetItemInput{
+		Key: map[string]*dynamodb.AttributeValue{
+			"PK": {S: aws.String(fmt.Sprintf("Person#%s", want.Name))},
+		},
+		TableName:      &tableName,
+		ConsistentRead: aws.Bool(false),
+	}, &dynamodb.GetItemOutput{
+		Item: map[string]*dynamodb.AttributeValue{
+			"PK":  {S: aws.String(fmt.Sprintf("Person#%s", want.Name))},
+			"Age": {N: aws.String(strconv.FormatInt(int64(want.Age), 10))},
 		},
 	})
 	got := Person{

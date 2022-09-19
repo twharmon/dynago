@@ -237,6 +237,11 @@ func (d *Dynago) simpleMarshal(v reflect.Value, layout string) (*dynamodb.Attrib
 		s := strconv.FormatInt(int64(val), 10)
 		return &dynamodb.AttributeValue{N: &s}, nil
 	case reflect.Int64:
+		if v.Type() == durationType {
+			val := v.Interface().(time.Duration)
+			s := strconv.FormatInt(int64(val), 10)
+			return &dynamodb.AttributeValue{N: &s}, nil
+		}
 		val := v.Interface().(int64)
 		s := strconv.FormatInt(val, 10)
 		return &dynamodb.AttributeValue{N: &s}, nil

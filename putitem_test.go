@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strconv"
 	"testing"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
@@ -133,6 +134,31 @@ func TestPutItemDefaultTableName(t *testing.T) {
 		TableName: &tableName,
 	})
 	if err := client.PutItem(&p).Exec(); err != nil {
+		t.Fatalf("unexpected err: %s", err)
+	}
+	ddb.done()
+}
+
+func TestPutItemDuration(t *testing.T) {
+	ddb := mock(t)
+	client := dynago.New(ddb)
+	type Person struct {
+		Name string `pk:"primary" attr:"PK" fmt:"Person#{}"`
+		Age  time.Duration
+	}
+	tableName := "bar"
+	p := Person{
+		Name: "foo",
+		Age:  33,
+	}
+	ddb.MockPut(&dynamodb.PutItemInput{
+		Item: map[string]*dynamodb.AttributeValue{
+			"PK":  {S: aws.String(fmt.Sprintf("Person#%s", p.Name))},
+			"Age": {N: aws.String(strconv.FormatInt(int64(p.Age), 10))},
+		},
+		TableName: &tableName,
+	})
+	if err := client.PutItem(&p).TableName(tableName).Exec(); err != nil {
 		t.Fatalf("unexpected err: %s", err)
 	}
 	ddb.done()

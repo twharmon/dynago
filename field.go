@@ -11,7 +11,8 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 )
 
-var timeType = reflect.TypeOf(time.Time{})
+var timeType = reflect.TypeOf(time.Now())
+var durationType = reflect.TypeOf(time.Second)
 var fmtRegExp = regexp.MustCompile(`\{([A-Z]?[a-zA-Z0-9_]*)\}`)
 
 type field struct {

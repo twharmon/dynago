@@ -130,7 +130,7 @@ func (q *Query) Exec() error {
 	var err error
 	output, err := q.dynago.ddb.Query(q.input)
 	if err != nil {
-		return fmt.Errorf("d.ddb.GetItem: %w", err)
+		return fmt.Errorf("d.ddb.Query: %w", err)
 	}
 	rt := reflect.TypeOf(q.items)
 	for rt.Kind() == reflect.Ptr {

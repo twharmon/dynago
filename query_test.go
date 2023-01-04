@@ -14,8 +14,8 @@ func TestQueryBasic(t *testing.T) {
 	ddb := mock(t)
 	client := dynago.New(ddb)
 	type Person struct {
-		Name string `idx:"primary" attr:"PK" fmt:"Person#{}"`
-		Team string `idx:"primary" fmt:"Team#{}"`
+		Name string `attr:"PK" fmt:"Person#{}"`
+		Team string `fmt:"Team#{}"`
 		Age  int64
 	}
 	want := []*Person{{
@@ -58,8 +58,8 @@ func TestQueryProjExp(t *testing.T) {
 	ddb := mock(t)
 	client := dynago.New(ddb)
 	type Person struct {
-		Name string `idx:"primary" attr:"PK" fmt:"Person#{}"`
-		Team string `idx:"primary" fmt:"Team#{}"`
+		Name string `attr:"PK" fmt:"Person#{}"`
+		Team string `fmt:"Team#{}"`
 		Age  int64
 	}
 	want := []*Person{{
@@ -104,8 +104,8 @@ func TestQueryFilterExp(t *testing.T) {
 	ddb := mock(t)
 	client := dynago.New(ddb)
 	type Person struct {
-		Name string `idx:"primary" attr:"PK" fmt:"Person#{}"`
-		Team string `idx:"primary" fmt:"Team#{}"`
+		Name string `attr:"PK" fmt:"Person#{}"`
+		Team string `fmt:"Team#{}"`
 		Age  int64
 	}
 	want := []*Person{{
@@ -150,8 +150,8 @@ func TestQueryExcStKey(t *testing.T) {
 	ddb := mock(t)
 	client := dynago.New(ddb)
 	type Person struct {
-		Name string `idx:"primary" attr:"PK" fmt:"Person#{}"`
-		Team string `idx:"primary" fmt:"Team#{}"`
+		Name string `attr:"PK" fmt:"Person#{}"`
+		Team string `fmt:"Team#{}"`
 		Age  int64
 	}
 	want := []*Person{{
@@ -196,8 +196,8 @@ func TestQueryLimit(t *testing.T) {
 	ddb := mock(t)
 	client := dynago.New(ddb)
 	type Person struct {
-		Name string `idx:"primary" attr:"PK" fmt:"Person#{}"`
-		Team string `idx:"primary" fmt:"Team#{}"`
+		Name string `attr:"PK" fmt:"Person#{}"`
+		Team string `fmt:"Team#{}"`
 		Age  int64
 	}
 	want := []*Person{{
@@ -242,8 +242,8 @@ func TestQuerySelect(t *testing.T) {
 	ddb := mock(t)
 	client := dynago.New(ddb)
 	type Person struct {
-		Name string `idx:"primary" attr:"PK" fmt:"Person#{}"`
-		Team string `idx:"primary" fmt:"Team#{}"`
+		Name string `attr:"PK" fmt:"Person#{}"`
+		Team string `fmt:"Team#{}"`
 		Age  int64
 	}
 	want := []*Person{{
@@ -288,8 +288,8 @@ func TestQueryExpAttrNames(t *testing.T) {
 	ddb := mock(t)
 	client := dynago.New(ddb)
 	type Person struct {
-		Name string `idx:"primary" attr:"PK" fmt:"Person#{}"`
-		Team string `idx:"primary" fmt:"Team#{}"`
+		Name string `attr:"PK" fmt:"Person#{}"`
+		Team string `fmt:"Team#{}"`
 		Age  int64
 	}
 	want := []*Person{{
@@ -334,8 +334,8 @@ func TestQueryConsistentRead(t *testing.T) {
 	ddb := mock(t)
 	client := dynago.New(ddb)
 	type Person struct {
-		Name string `idx:"primary" attr:"PK" fmt:"Person#{}"`
-		Team string `idx:"primary" fmt:"Team#{}"`
+		Name string `attr:"PK" fmt:"Person#{}"`
+		Team string `fmt:"Team#{}"`
 		Age  int64
 	}
 	want := []*Person{{
@@ -379,8 +379,8 @@ func TestQueryScanIndexForward(t *testing.T) {
 	ddb := mock(t)
 	client := dynago.New(ddb)
 	type Person struct {
-		Name string `idx:"primary" attr:"PK" fmt:"Person#{}"`
-		Team string `idx:"primary" fmt:"Team#{}"`
+		Name string `attr:"PK" fmt:"Person#{}"`
+		Team string `fmt:"Team#{}"`
 		Age  int64
 	}
 	want := []*Person{{
@@ -425,8 +425,8 @@ func TestQueryIndex(t *testing.T) {
 	ddb := mock(t)
 	client := dynago.New(ddb)
 	type Person struct {
-		Name string `idx:"primary" attr:"PK" fmt:"Person#{}"`
-		Team string `idx:"primary" fmt:"Team#{}"`
+		Name string `attr:"PK" fmt:"Person#{}"`
+		Team string `fmt:"Team#{}"`
 		Age  int64
 	}
 	want := []*Person{{
@@ -472,8 +472,8 @@ func TestQueryDefaultTableName(t *testing.T) {
 	tableName := "baz"
 	client := dynago.New(ddb, &dynago.Config{DefaultTableName: tableName})
 	type Person struct {
-		Name string `idx:"primary" attr:"PK" fmt:"Person#{}"`
-		Team string `idx:"primary" fmt:"Team#{}"`
+		Name string `attr:"PK" fmt:"Person#{}"`
+		Team string `fmt:"Team#{}"`
 		Age  int64
 	}
 	want := []*Person{{
@@ -514,8 +514,8 @@ func TestQueryValues(t *testing.T) {
 	ddb := mock(t)
 	client := dynago.New(ddb)
 	type Person struct {
-		Name string `idx:"primary" attr:"PK" fmt:"Person#{}"`
-		Team string `idx:"primary" fmt:"Team#{}"`
+		Name string `attr:"PK" fmt:"Person#{}"`
+		Team string `fmt:"Team#{}"`
 		Age  int64
 	}
 	want := []Person{{
@@ -558,8 +558,8 @@ func TestExpInt(t *testing.T) {
 	ddb := mock(t)
 	client := dynago.New(ddb)
 	type Person struct {
-		Name string `idx:"primary" attr:"PK" fmt:"Person#{}"`
-		Age  int    `idx:"primary" attr:"SK"`
+		Name string `attr:"PK" fmt:"Person#{}"`
+		Age  int    `attr:"SK"`
 	}
 	want := []*Person{{
 		Name: "foo",
@@ -599,8 +599,8 @@ func TestExpUint(t *testing.T) {
 	ddb := mock(t)
 	client := dynago.New(ddb)
 	type Person struct {
-		Name string `idx:"primary" attr:"PK" fmt:"Person#{}"`
-		Age  uint   `idx:"primary" attr:"SK"`
+		Name string `attr:"PK" fmt:"Person#{}"`
+		Age  uint   `attr:"SK"`
 	}
 	want := []*Person{{
 		Name: "foo",
@@ -640,8 +640,8 @@ func TestExpInt8(t *testing.T) {
 	ddb := mock(t)
 	client := dynago.New(ddb)
 	type Person struct {
-		Name string `idx:"primary" attr:"PK" fmt:"Person#{}"`
-		Age  int8   `idx:"primary" attr:"SK"`
+		Name string `attr:"PK" fmt:"Person#{}"`
+		Age  int8   `attr:"SK"`
 	}
 	want := []*Person{{
 		Name: "foo",
@@ -681,8 +681,8 @@ func TestExpUint8(t *testing.T) {
 	ddb := mock(t)
 	client := dynago.New(ddb)
 	type Person struct {
-		Name string `idx:"primary" attr:"PK" fmt:"Person#{}"`
-		Age  uint8  `idx:"primary" attr:"SK"`
+		Name string `attr:"PK" fmt:"Person#{}"`
+		Age  uint8  `attr:"SK"`
 	}
 	want := []*Person{{
 		Name: "foo",
@@ -722,8 +722,8 @@ func TestExpInt16(t *testing.T) {
 	ddb := mock(t)
 	client := dynago.New(ddb)
 	type Person struct {
-		Name string `idx:"primary" attr:"PK" fmt:"Person#{}"`
-		Age  int16  `idx:"primary" attr:"SK"`
+		Name string `attr:"PK" fmt:"Person#{}"`
+		Age  int16  `attr:"SK"`
 	}
 	want := []*Person{{
 		Name: "foo",
@@ -763,8 +763,8 @@ func TestExpUint16(t *testing.T) {
 	ddb := mock(t)
 	client := dynago.New(ddb)
 	type Person struct {
-		Name string `idx:"primary" attr:"PK" fmt:"Person#{}"`
-		Age  uint16 `idx:"primary" attr:"SK"`
+		Name string `attr:"PK" fmt:"Person#{}"`
+		Age  uint16 `attr:"SK"`
 	}
 	want := []*Person{{
 		Name: "foo",
@@ -804,8 +804,8 @@ func TestExpInt32(t *testing.T) {
 	ddb := mock(t)
 	client := dynago.New(ddb)
 	type Person struct {
-		Name string `idx:"primary" attr:"PK" fmt:"Person#{}"`
-		Age  int32  `idx:"primary" attr:"SK"`
+		Name string `attr:"PK" fmt:"Person#{}"`
+		Age  int32  `attr:"SK"`
 	}
 	want := []*Person{{
 		Name: "foo",
@@ -845,8 +845,8 @@ func TestExpUint32(t *testing.T) {
 	ddb := mock(t)
 	client := dynago.New(ddb)
 	type Person struct {
-		Name string `idx:"primary" attr:"PK" fmt:"Person#{}"`
-		Age  uint32 `idx:"primary" attr:"SK"`
+		Name string `attr:"PK" fmt:"Person#{}"`
+		Age  uint32 `attr:"SK"`
 	}
 	want := []*Person{{
 		Name: "foo",
@@ -886,8 +886,8 @@ func TestExpInt64(t *testing.T) {
 	ddb := mock(t)
 	client := dynago.New(ddb)
 	type Person struct {
-		Name string `idx:"primary" attr:"PK" fmt:"Person#{}"`
-		Age  int64  `idx:"primary" attr:"SK"`
+		Name string `attr:"PK" fmt:"Person#{}"`
+		Age  int64  `attr:"SK"`
 	}
 	want := []*Person{{
 		Name: "foo",
@@ -927,8 +927,8 @@ func TestExpUint64(t *testing.T) {
 	ddb := mock(t)
 	client := dynago.New(ddb)
 	type Person struct {
-		Name string `idx:"primary" attr:"PK" fmt:"Person#{}"`
-		Age  uint64 `idx:"primary" attr:"SK"`
+		Name string `attr:"PK" fmt:"Person#{}"`
+		Age  uint64 `attr:"SK"`
 	}
 	want := []*Person{{
 		Name: "foo",
@@ -968,8 +968,8 @@ func TestExpFloat32(t *testing.T) {
 	ddb := mock(t)
 	client := dynago.New(ddb)
 	type Person struct {
-		Name string  `idx:"primary" attr:"PK" fmt:"Person#{}"`
-		Age  float32 `idx:"primary" attr:"SK"`
+		Name string  `attr:"PK" fmt:"Person#{}"`
+		Age  float32 `attr:"SK"`
 	}
 	want := []*Person{{
 		Name: "foo",
@@ -1009,8 +1009,8 @@ func TestExpFloat64(t *testing.T) {
 	ddb := mock(t)
 	client := dynago.New(ddb)
 	type Person struct {
-		Name string  `idx:"primary" attr:"PK" fmt:"Person#{}"`
-		Age  float64 `idx:"primary" attr:"SK"`
+		Name string  `attr:"PK" fmt:"Person#{}"`
+		Age  float64 `attr:"SK"`
 	}
 	want := []*Person{{
 		Name: "foo",

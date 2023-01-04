@@ -14,8 +14,8 @@ func TestScanBasic(t *testing.T) {
 	ddb := mock(t)
 	client := dynago.New(ddb)
 	type Person struct {
-		Name string `idx:"primary" attr:"PK" fmt:"Person#{}"`
-		Team string `idx:"primary" fmt:"Team#{}"`
+		Name string `attr:"PK" fmt:"Person#{}"`
+		Team string `fmt:"Team#{}"`
 		Age  int64
 	}
 	want := []*Person{{
@@ -56,8 +56,8 @@ func TestScanSegment(t *testing.T) {
 	ddb := mock(t)
 	client := dynago.New(ddb)
 	type Person struct {
-		Name string `idx:"primary" attr:"PK" fmt:"Person#{}"`
-		Team string `idx:"primary" fmt:"Team#{}"`
+		Name string `attr:"PK" fmt:"Person#{}"`
+		Team string `fmt:"Team#{}"`
 		Age  int64
 	}
 	want := []*Person{{
@@ -100,8 +100,8 @@ func TestScanTotalSegments(t *testing.T) {
 	ddb := mock(t)
 	client := dynago.New(ddb)
 	type Person struct {
-		Name string `idx:"primary" attr:"PK" fmt:"Person#{}"`
-		Team string `idx:"primary" fmt:"Team#{}"`
+		Name string `attr:"PK" fmt:"Person#{}"`
+		Team string `fmt:"Team#{}"`
 		Age  int64
 	}
 	want := []*Person{{
@@ -144,8 +144,8 @@ func TestScanProjExp(t *testing.T) {
 	ddb := mock(t)
 	client := dynago.New(ddb)
 	type Person struct {
-		Name string `idx:"primary" attr:"PK" fmt:"Person#{}"`
-		Team string `idx:"primary" fmt:"Team#{}"`
+		Name string `attr:"PK" fmt:"Person#{}"`
+		Team string `fmt:"Team#{}"`
 		Age  int64
 	}
 	want := []*Person{{
@@ -188,8 +188,8 @@ func TestScanFilterExp(t *testing.T) {
 	ddb := mock(t)
 	client := dynago.New(ddb)
 	type Person struct {
-		Name string `idx:"primary" attr:"PK" fmt:"Person#{}"`
-		Team string `idx:"primary" fmt:"Team#{}"`
+		Name string `attr:"PK" fmt:"Person#{}"`
+		Team string `fmt:"Team#{}"`
 		Age  int64
 	}
 	want := []*Person{{
@@ -232,8 +232,8 @@ func TestScanExcStKey(t *testing.T) {
 	ddb := mock(t)
 	client := dynago.New(ddb)
 	type Person struct {
-		Name string `idx:"primary" attr:"PK" fmt:"Person#{}"`
-		Team string `idx:"primary" fmt:"Team#{}"`
+		Name string `attr:"PK" fmt:"Person#{}"`
+		Team string `fmt:"Team#{}"`
 		Age  int64
 	}
 	want := []*Person{{
@@ -276,8 +276,8 @@ func TestScanLimit(t *testing.T) {
 	ddb := mock(t)
 	client := dynago.New(ddb)
 	type Person struct {
-		Name string `idx:"primary" attr:"PK" fmt:"Person#{}"`
-		Team string `idx:"primary" fmt:"Team#{}"`
+		Name string `attr:"PK" fmt:"Person#{}"`
+		Team string `fmt:"Team#{}"`
 		Age  int64
 	}
 	want := []*Person{{
@@ -320,8 +320,8 @@ func TestScanSelect(t *testing.T) {
 	ddb := mock(t)
 	client := dynago.New(ddb)
 	type Person struct {
-		Name string `idx:"primary" attr:"PK" fmt:"Person#{}"`
-		Team string `idx:"primary" fmt:"Team#{}"`
+		Name string `attr:"PK" fmt:"Person#{}"`
+		Team string `fmt:"Team#{}"`
 		Age  int64
 	}
 	want := []*Person{{
@@ -364,8 +364,8 @@ func TestScanExpAttrNames(t *testing.T) {
 	ddb := mock(t)
 	client := dynago.New(ddb)
 	type Person struct {
-		Name string `idx:"primary" attr:"PK" fmt:"Person#{}"`
-		Team string `idx:"primary" fmt:"Team#{}"`
+		Name string `attr:"PK" fmt:"Person#{}"`
+		Team string `fmt:"Team#{}"`
 		Age  int64
 	}
 	want := []*Person{{
@@ -408,8 +408,8 @@ func TestScanConsistentRead(t *testing.T) {
 	ddb := mock(t)
 	client := dynago.New(ddb)
 	type Person struct {
-		Name string `idx:"primary" attr:"PK" fmt:"Person#{}"`
-		Team string `idx:"primary" fmt:"Team#{}"`
+		Name string `attr:"PK" fmt:"Person#{}"`
+		Team string `fmt:"Team#{}"`
 		Age  int64
 	}
 	want := []*Person{{
@@ -451,8 +451,8 @@ func TestScanIndex(t *testing.T) {
 	ddb := mock(t)
 	client := dynago.New(ddb)
 	type Person struct {
-		Name string `idx:"primary" attr:"PK" fmt:"Person#{}"`
-		Team string `idx:"primary" fmt:"Team#{}"`
+		Name string `attr:"PK" fmt:"Person#{}"`
+		Team string `fmt:"Team#{}"`
 		Age  int64
 	}
 	want := []*Person{{

@@ -13,6 +13,7 @@ func TestUpdateItemBasic(t *testing.T) {
 	ddb := mock(t)
 	client := dynago.New(ddb)
 	type Person struct {
+		*CompositeTable
 		Name string `pk:"primary" attr:"PK" fmt:"Person#{}" idx:"primary"`
 		Age  int64
 	}
@@ -38,6 +39,7 @@ func TestUpdateItemExpAttrVals(t *testing.T) {
 	ddb := mock(t)
 	client := dynago.New(ddb)
 	type Person struct {
+		*CompositeTable
 		Name string `pk:"primary" attr:"PK" fmt:"Person#{}" idx:"primary"`
 		Age  int64
 	}
@@ -63,6 +65,7 @@ func TestUpdateItemCondExp(t *testing.T) {
 	ddb := mock(t)
 	client := dynago.New(ddb)
 	type Person struct {
+		*CompositeTable
 		Name string `pk:"primary" attr:"PK" fmt:"Person#{}" idx:"primary"`
 		Age  int64
 	}
@@ -88,6 +91,7 @@ func TestUpdateItemExpAttrNames(t *testing.T) {
 	ddb := mock(t)
 	client := dynago.New(ddb)
 	type Person struct {
+		*CompositeTable
 		Name string `pk:"primary" attr:"PK" fmt:"Person#{}" idx:"primary"`
 		Age  int64
 	}
@@ -113,6 +117,7 @@ func TestUpdateItemUpExp(t *testing.T) {
 	ddb := mock(t)
 	client := dynago.New(ddb)
 	type Person struct {
+		*CompositeTable
 		Name string `pk:"primary" attr:"PK" fmt:"Person#{}" idx:"primary"`
 		Age  int64
 	}
@@ -139,6 +144,7 @@ func TestUpdateItemDefaultTableName(t *testing.T) {
 	tableName := "bar"
 	client := dynago.New(ddb, &dynago.Config{DefaultTableName: tableName})
 	type Person struct {
+		*CompositeTable
 		Name string `pk:"primary" attr:"PK" fmt:"Person#{}" idx:"primary"`
 		Age  int64
 	}

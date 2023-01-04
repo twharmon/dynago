@@ -12,13 +12,13 @@ var ErrItemNotFound = errors.New("item not found")
 
 // GetItem represents a GetItem operation.
 type GetItem struct {
-	item   interface{}
+	item   Keyer
 	input  *dynamodb.GetItemInput
 	dynago *Dynago
 }
 
 // GetItem returns a GetItem operation.
-func (d *Dynago) GetItem(item interface{}) *GetItem {
+func (d *Dynago) GetItem(item Keyer) *GetItem {
 	return &GetItem{
 		input: &dynamodb.GetItemInput{
 			ConsistentRead: &d.config.DefaultConsistentRead,

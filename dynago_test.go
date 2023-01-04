@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"reflect"
 	"strconv"
-	"strings"
 	"testing"
 	"time"
 
@@ -204,13 +203,13 @@ func TestMarshalStruct(t *testing.T) {
 		ty := v.Type().Name()
 		item["Type"] = &dynamodb.AttributeValue{S: &ty}
 	}
-
 	type Pet struct {
 		Type string
 		Age  int64 `attr:"AGE"`
 	}
 	type Person struct {
-		Name string `idx:"primary"`
+		*CompositeTable
+		Name string
 		Pet  *Pet
 	}
 	p := Person{
@@ -1538,7 +1537,8 @@ func TestUnmarshalTimeWithLayoutTag(t *testing.T) {
 
 func TestMarshalWithAdditionalAttributes(t *testing.T) {
 	type Person struct {
-		Name string `idx:"primary"`
+		*CompositeTable
+		Name string
 	}
 	client := dynago.New(nil, &dynago.Config{
 		AdditionalAttrs: func(item map[string]*dynamodb.AttributeValue, v reflect.Value) {
@@ -1580,124 +1580,4 @@ func TestMarshalWithUnexportedMember(t *testing.T) {
 		t.Fatalf("unexpected err: %s", err)
 	}
 	assertEq(t, want, got)
-}
-
-func BenchmarkMarshal(b *testing.B) {
-	type Person struct {
-		Name       string  `attr:"name" fmt:"Person#{Name}"`
-		Age        int64   `attr:"age"`
-		Percentage float64 `attr:"percentage"`
-		Alive      bool    `attr:"alive"`
-		Born       time.Time
-	}
-	p := Person{
-		Name:       "George",
-		Age:        33,
-		Percentage: 25.323521,
-		Alive:      true,
-		Born:       time.Now(),
-	}
-	client := dynago.New(nil)
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		_, _ = client.Marshal(&p)
-	}
-}
-
-func BenchmarkMarshalByHand(b *testing.B) {
-	type Person struct {
-		Name       string `attr:"name" fmt:"Person#{Name}"`
-		Age        int64
-		Percentage float64
-		Alive      bool
-		Born       time.Time
-	}
-	p := Person{
-		Name:       "George",
-		Age:        33,
-		Percentage: 25.323521,
-		Alive:      true,
-		Born:       time.Now(),
-	}
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		_ = map[string]*dynamodb.AttributeValue{
-			"name":       {S: aws.String(fmt.Sprintf("Person#%s", p.Name))},
-			"Age":        {N: aws.String(strconv.FormatInt(p.Age, 10))},
-			"Percentage": {N: aws.String(strings.TrimRight(strconv.FormatFloat(p.Percentage, 'f', -1, 64), "0"))},
-			"Alive":      {BOOL: &p.Alive},
-			"Born":       {S: aws.String(p.Born.Format(time.RFC3339))},
-		}
-	}
-}
-
-func BenchmarkUnmarshal(b *testing.B) {
-	type Person struct {
-		Name       string `attr:"name" fmt:"Person#{Name}"`
-		Age        int64
-		Percentage float64
-		Alive      bool
-		Born       time.Time
-	}
-	item := map[string]*dynamodb.AttributeValue{
-		"name":       {S: aws.String("Person#George")},
-		"Age":        {N: aws.String(strconv.FormatInt(33, 10))},
-		"Percentage": {N: aws.String(strings.TrimRight(strconv.FormatFloat(25.323521, 'f', -1, 64), "0"))},
-		"Alive":      {BOOL: aws.Bool(true)},
-		"Born":       {S: aws.String(time.Now().Format(time.RFC3339))},
-	}
-	client := dynago.New(nil)
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		var p Person
-		if err := client.Unmarshal(item, &p); err != nil {
-			panic(err)
-		}
-	}
-}
-
-func BenchmarkUnmarshalByHand(b *testing.B) {
-	type Person struct {
-		Name       string
-		Age        int64
-		Percentage float64
-		Alive      bool
-		Born       time.Time
-	}
-	item := map[string]*dynamodb.AttributeValue{
-		"name":       {S: aws.String("Person#George")},
-		"Age":        {N: aws.String(strconv.FormatInt(33, 10))},
-		"Percentage": {N: aws.String(strings.TrimRight(strconv.FormatFloat(25.323521, 'f', -1, 64), "0"))},
-		"Alive":      {BOOL: aws.Bool(true)},
-		"Born":       {S: aws.String(time.Now().Format(time.RFC3339))},
-	}
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		var p Person
-		var err error
-		if item["name"] != nil && item["name"].S != nil {
-			p.Name = strings.TrimPrefix(*item["name"].S, "Person#")
-		}
-		if item["Age"] != nil && item["Age"].N != nil {
-			p.Age, err = strconv.ParseInt(*item["Age"].N, 10, 64)
-			if err != nil {
-				panic(err)
-			}
-		}
-		if item["Percentage"] != nil && item["Percentage"].N != nil {
-			p.Percentage, err = strconv.ParseFloat(*item["Percentage"].N, 64)
-			if err != nil {
-				panic(err)
-			}
-		}
-		if item["Alive"] != nil && item["Alive"].BOOL != nil {
-			p.Alive = *item["Alive"].BOOL
-		}
-		if item["Born"] != nil && item["Born"].S != nil {
-			p.Born, err = time.Parse(time.RFC3339, *item["Born"].S)
-			if err != nil {
-				panic(err)
-			}
-		}
-	}
 }

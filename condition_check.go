@@ -13,14 +13,14 @@ import (
 // the item.
 type ConditionCheck struct {
 	check  *dynamodb.ConditionCheck
-	item   interface{}
+	item   Keyer
 	dynago *Dynago
 	err    error
 }
 
 // ConditionCheck creates a ConditionCheck operation. The given item
 // must have the primary key fields set.
-func (d *Dynago) ConditionCheck(item interface{}) *ConditionCheck {
+func (d *Dynago) ConditionCheck(item Keyer) *ConditionCheck {
 	return &ConditionCheck{
 		check: &dynamodb.ConditionCheck{
 			TableName: &d.config.DefaultTableName,

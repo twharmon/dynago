@@ -15,6 +15,7 @@ func TestPutItemBasic(t *testing.T) {
 	ddb := mock(t)
 	client := dynago.New(ddb)
 	type Person struct {
+		*CompositeTable
 		Name string `pk:"primary" attr:"PK" fmt:"Person#{}"`
 		Age  int64
 	}
@@ -40,6 +41,7 @@ func TestPutItemExpAttrVals(t *testing.T) {
 	ddb := mock(t)
 	client := dynago.New(ddb)
 	type Person struct {
+		*CompositeTable
 		Name string `pk:"primary" attr:"PK" fmt:"Person#{}"`
 		Age  int64
 	}
@@ -66,6 +68,7 @@ func TestPutItemCondExp(t *testing.T) {
 	ddb := mock(t)
 	client := dynago.New(ddb)
 	type Person struct {
+		*CompositeTable
 		Name string `pk:"primary" attr:"PK" fmt:"Person#{}"`
 		Age  int64
 	}
@@ -92,6 +95,7 @@ func TestPutItemExpAttrNames(t *testing.T) {
 	ddb := mock(t)
 	client := dynago.New(ddb)
 	type Person struct {
+		*CompositeTable
 		Name string `pk:"primary" attr:"PK" fmt:"Person#{}"`
 		Age  int64
 	}
@@ -119,6 +123,7 @@ func TestPutItemDefaultTableName(t *testing.T) {
 	tableName := "bar"
 	client := dynago.New(ddb, &dynago.Config{DefaultTableName: tableName})
 	type Person struct {
+		*CompositeTable
 		Name string `pk:"primary" attr:"PK" fmt:"Person#{}"`
 		Age  int64
 	}
@@ -143,6 +148,7 @@ func TestPutItemDuration(t *testing.T) {
 	ddb := mock(t)
 	client := dynago.New(ddb)
 	type Person struct {
+		*CompositeTable
 		Name string `pk:"primary" attr:"PK" fmt:"Person#{}"`
 		Age  time.Duration
 	}

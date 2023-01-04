@@ -10,14 +10,14 @@ import (
 
 // DeleteItem represents a delete item operation.
 type DeleteItem struct {
-	item   interface{}
+	item   Keyer
 	input  *dynamodb.DeleteItemInput
 	dynago *Dynago
 	err    error
 }
 
 // DeleteItem creates a DeleteItem operation.
-func (d *Dynago) DeleteItem(item interface{}) *DeleteItem {
+func (d *Dynago) DeleteItem(item Keyer) *DeleteItem {
 	return &DeleteItem{
 		item: item,
 		input: &dynamodb.DeleteItemInput{

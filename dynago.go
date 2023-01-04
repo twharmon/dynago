@@ -26,6 +26,10 @@ type DynagoAPI interface {
 	Unmarshal(map[string]*dynamodb.AttributeValue, interface{}) error
 }
 
+type Keyer interface {
+	PrimaryKeys() []string
+}
+
 // Dynago is
 type Dynago struct {
 	config   *Config
@@ -52,19 +56,10 @@ type Config struct {
 	// values. Defaults to "layout".
 	LayoutTagName string
 
-	// IndexTagName specifies which tag is used for table index name.
-	// Defaults to "idx".
-	IndexTagName string
-
 	// AttrsToCopyTagName specifies which tag is used to determine
 	// which other attributes should have same value. Defaults to
 	// "copy".
 	AttrsToCopyTagName string
-
-	// AttrsToCopyIndexTagName specifies which tag is used to
-	// determine which other attributes should have same index.
-	// Defaults to "copyidx".
-	AttrsToCopyIndexTagName string
 
 	// AdditionalAttrs can be added for each dynamodb item.
 	AdditionalAttrs func(map[string]*dynamodb.AttributeValue, reflect.Value)
@@ -93,9 +88,6 @@ func New(ddb dynamodbiface.DynamoDBAPI, config ...*Config) *Dynago {
 	if d.config.AttrsToCopyTagName == "" {
 		d.config.AttrsToCopyTagName = "copy"
 	}
-	if d.config.AttrsToCopyIndexTagName == "" {
-		d.config.AttrsToCopyIndexTagName = "copyidx"
-	}
 	if d.config.FmtTagName == "" {
 		d.config.FmtTagName = "fmt"
 	}
@@ -104,9 +96,6 @@ func New(ddb dynamodbiface.DynamoDBAPI, config ...*Config) *Dynago {
 	}
 	if d.config.LayoutTagName == "" {
 		d.config.LayoutTagName = "layout"
-	}
-	if d.config.IndexTagName == "" {
-		d.config.IndexTagName = "idx"
 	}
 	d.ddb = ddb
 	return &d
@@ -120,7 +109,7 @@ func (d *Dynago) Unmarshal(item map[string]*dynamodb.AttributeValue, v interface
 		return fmt.Errorf("d.cachedStruct: %w", err)
 	}
 	for i := 0; i < ty.NumField(); i++ {
-		if cache[i].attrName == "-" {
+		if cache[i].attrName == "-" || ty.Field(i).Anonymous {
 			continue
 		}
 		if err := cache[i].unmarshal(item, val); err != nil {
@@ -138,7 +127,7 @@ func (d *Dynago) Marshal(v interface{}) (map[string]*dynamodb.AttributeValue, er
 	if err != nil {
 		return nil, fmt.Errorf("d.cachedStruct: %w", err)
 	}
-	isTopLevel := false
+	_, isTopLevel := v.(Keyer)
 	for i := 0; i < ty.NumField(); i++ {
 		if cache[i].attrName == "-" {
 			continue
@@ -149,9 +138,6 @@ func (d *Dynago) Marshal(v interface{}) (map[string]*dynamodb.AttributeValue, er
 		}
 		if attrVal == nil {
 			continue
-		}
-		if !isTopLevel && cache[i].tableIndex != "" {
-			isTopLevel = true
 		}
 		m[cache[i].attrName] = attrVal
 		for _, cp := range cache[i].attrsToCopy {
@@ -164,39 +150,21 @@ func (d *Dynago) Marshal(v interface{}) (map[string]*dynamodb.AttributeValue, er
 	return m, nil
 }
 
-func (d *Dynago) key(v interface{}) (map[string]*dynamodb.AttributeValue, error) {
+func (d *Dynago) key(v Keyer) (map[string]*dynamodb.AttributeValue, error) {
 	m := make(map[string]*dynamodb.AttributeValue)
 	ty, val := tyVal(v)
 	cache, err := d.cachedStruct(ty)
 	if err != nil {
 		return nil, fmt.Errorf("d.cachedStruct: %w", err)
 	}
-	for i := 0; i < ty.NumField(); i++ {
-		if cache[i].tableIndex != "primary" {
-			continue
-		}
-		if cache[i].attrName == "-" {
-			continue
-		}
-		attrVal, err := cache[i].attrVal(val)
-		if err != nil {
-			return nil, fmt.Errorf("cache.attrVal: %w", err)
-		}
-		if attrVal == nil {
-			continue
-		}
-		m[cache[i].attrName] = attrVal
-		// TODO: any way to avoid nested loop?
-		if copyIdx := cache[i].attrToCopyIdx; copyIdx != "" {
-			for j := 0; j < ty.NumField(); j++ {
-				if cache[j].attrName == copyIdx || slices.Contains(cache[j].attrsToCopy, copyIdx) {
-					av, err := cache[j].attrVal(val)
-					if err != nil {
-						return nil, fmt.Errorf("cache.attrVal: %w", err)
-					}
-					m[copyIdx] = av
-					break
+	for _, primKey := range v.PrimaryKeys() {
+		for i := 0; i < ty.NumField(); i++ {
+			if cache[i].attrName == primKey || slices.Contains(cache[i].attrsToCopy, primKey) {
+				av, err := cache[i].attrVal(val)
+				if err != nil {
+					return nil, fmt.Errorf("cache.attrVal: %w", err)
 				}
+				m[primKey] = av
 			}
 		}
 	}

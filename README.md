@@ -23,14 +23,22 @@ import (
 	"github.com/twharmon/dynago"
 )
 
-type Post struct {
-	// Set attribute name with `attr` tag if it needs to be different
-	// than field name. Specify that this attribute is part of
-	// primary key with `idx:"primary"`. Use `fmt:"Post#{}"` to
-	// indicate how the value will be stored in DynamoDB.
-	ID string `idx:"primary" attr:"PK" fmt:"Post#{}"`
+type Schema struct {}
 
-	Created  time.Time `idx:"primary" attr:"SK" fmt:"Created#{}"`
+func (s *Schema) PrimaryKeys() []string {
+	return []string{"PK", "SK"}
+}
+
+type Post struct {
+	// Embed a struct that implements the dynago.Keyer interface.
+	*Schema
+
+	// Set attribute name with `attr` tag if it needs to be different
+	// than field name. Use `fmt:"Post#{}"` to indicate how the value
+	// will be stored in DynamoDB.
+	ID string `attr:"PK" fmt:"Post#{}"`
+
+	Created  time.Time `attr:"SK" fmt:"Created#{}"`
 	AuthorID string
 	Title    string
 	Body     string
@@ -90,18 +98,27 @@ import (
 	"github.com/twharmon/dynago"
 )
 
+type Schema struct {}
+
+func (s *Schema) PrimaryKeys() []string {
+	return []string{"PK", "SK"}
+}
+
 type Post struct {
-	ID       string `idx:"primary" attr:"PK" fmt:"Post#{}"`
+	// Embed a struct that implements the dynago.Keyer interface.
+	*Schema
+
+	ID       string `attr:"PK" fmt:"Post#{}"`
 	AuthorID string
 	Title    string
 	Body     string
-	Created  time.Time `idx:"primary" attr:"SK" fmt:"Created#{}"`
+	Created  time.Time `attr:"SK" fmt:"Created#{}"`
 }
 
 type Author struct {
 	// Copy same value to attribute SK by using `copyidx:"SK"` in tag,
 	// while also specifying that SK is part of the same index.
-	ID   string `idx:"primary" attr:"PK" fmt:"Author#{}" copyidx:"SK"`
+	ID   string `attr:"PK" fmt:"Author#{}"`
 
 	// Copy same value to attribute AltName by using `copy:"AltName"` in tag.
 	Name string `copy:"AltName"`
@@ -138,26 +155,18 @@ func additionalAttrs(item map[string]*dynamodb.AttributeValue, v reflect.Value) 
 ### Compound Field Attributes
 ```go
 type Event struct {
-	Org string `attr:"PK" idx:"primary" fmt:"Org#{}"`
+	Org string `attr:"PK" fmt:"Org#{}"`
 
 	// In this `fmt` tag, {} is equivalent to {Country}. You can
 	// reference a different field name by putting it's name in
 	// curly brackets.
-	Country string `idx:"primary" attr:"SK" fmt:"Country#{}#City#{City}"`
+	Country string `attr:"SK" fmt:"Country#{}#City#{City}"`
 
 	// Since the City is specified in the "SK" attribute, we can
 	// skip putting it in another attribute if we want.
 	City    string `attr:"-"`
 	Created time.Time
 }
-```
-
-## Benchmarks
-```
-BenchmarkMarshal-10            	  472528	      2180 ns/op	    1733 B/op	      27 allocs/op
-BenchmarkMarshalByHand-10      	 1000000	      1049 ns/op	     976 B/op	      14 allocs/op
-BenchmarkUnmarshal-10          	  625406	      1862 ns/op	     578 B/op	      11 allocs/op
-BenchmarkUnmarshalByHand-10    	 3540060	       344.1 ns/op	       0 B/op	       0 allocs/op
 ```
 
 ## Contribute

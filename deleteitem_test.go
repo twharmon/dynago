@@ -9,11 +9,34 @@ import (
 	"github.com/twharmon/dynago"
 )
 
+type CompositeTable struct {
+}
+
+func (t *CompositeTable) TableName() string {
+	return "test-table-name"
+}
+
+func (t *CompositeTable) PrimaryKeys() []string {
+	return []string{"PK", "SK"}
+}
+
+type SimpleTable struct {
+}
+
+func (t *SimpleTable) TableName() string {
+	return "test-table-name"
+}
+
+func (t *SimpleTable) PrimaryKeys() []string {
+	return []string{"PK"}
+}
+
 func TestDeleteItemBasic(t *testing.T) {
 	ddb := mock(t)
 	client := dynago.New(ddb)
 	type Person struct {
-		Name string `idx:"primary" attr:"PK" fmt:"Person#{}"`
+		*CompositeTable
+		Name string `attr:"PK" fmt:"Person#{}"`
 		Age  int64
 	}
 	want := Person{
@@ -40,7 +63,8 @@ func TestDeleteItemConditionExpression(t *testing.T) {
 	ddb := mock(t)
 	client := dynago.New(ddb)
 	type Person struct {
-		Name string `idx:"primary" attr:"PK" fmt:"Person#{}"`
+		*CompositeTable
+		Name string `attr:"PK" fmt:"Person#{}"`
 		Age  int64
 	}
 	want := Person{
@@ -68,7 +92,8 @@ func TestDeleteItemExpressionAttributeNames(t *testing.T) {
 	ddb := mock(t)
 	client := dynago.New(ddb)
 	type Person struct {
-		Name string `idx:"primary" attr:"PK" fmt:"Person#{}"`
+		*CompositeTable
+		Name string `attr:"PK" fmt:"Person#{}"`
 		Age  int64
 	}
 	want := Person{
@@ -96,7 +121,8 @@ func TestDeleteItemExpressionAttributValues(t *testing.T) {
 	ddb := mock(t)
 	client := dynago.New(ddb)
 	type Person struct {
-		Name string `idx:"primary" attr:"PK" fmt:"Person#{}"`
+		*CompositeTable
+		Name string `attr:"PK" fmt:"Person#{}"`
 		Age  int64
 	}
 	want := Person{
@@ -125,7 +151,8 @@ func TestDeleteItemDefaultTableName(t *testing.T) {
 	tableName := "bar"
 	client := dynago.New(ddb, &dynago.Config{DefaultTableName: tableName})
 	type Person struct {
-		Name string `idx:"primary" attr:"PK" fmt:"Person#{}"`
+		*CompositeTable
+		Name string `attr:"PK" fmt:"Person#{}"`
 		Age  int64
 	}
 	want := Person{

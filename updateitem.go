@@ -10,14 +10,14 @@ import (
 
 // UpdateItem represents an UpdateItem operation.
 type UpdateItem struct {
-	item   interface{}
+	item   Keyer
 	input  *dynamodb.UpdateItemInput
 	dynago *Dynago
 	err    error
 }
 
 // UpdateItem retusn an UpdateItem operation.
-func (d *Dynago) UpdateItem(item interface{}) *UpdateItem {
+func (d *Dynago) UpdateItem(item Keyer) *UpdateItem {
 	return &UpdateItem{
 		input:  &dynamodb.UpdateItemInput{TableName: &d.config.DefaultTableName},
 		dynago: d,

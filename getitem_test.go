@@ -15,7 +15,8 @@ func TestGetItemBasic(t *testing.T) {
 	ddb := mock(t)
 	client := dynago.New(ddb)
 	type Person struct {
-		Name string `idx:"primary" attr:"PK" fmt:"Person#{}"`
+		*SimpleTable
+		Name string `attr:"PK" fmt:"Person#{}"`
 		Age  int64
 	}
 	want := Person{
@@ -49,7 +50,8 @@ func TestGetItemConsistentRead(t *testing.T) {
 	ddb := mock(t)
 	client := dynago.New(ddb)
 	type Person struct {
-		Name string `idx:"primary" attr:"PK" fmt:"Person#{}"`
+		*CompositeTable
+		Name string `attr:"PK" fmt:"Person#{}"`
 		Age  int64
 	}
 	want := Person{
@@ -83,7 +85,8 @@ func TestGetItemProjectionExpression(t *testing.T) {
 	ddb := mock(t)
 	client := dynago.New(ddb)
 	type Person struct {
-		Name string `idx:"primary" attr:"PK" fmt:"Person#{}"`
+		*CompositeTable
+		Name string `attr:"PK" fmt:"Person#{}"`
 		Age  int64
 	}
 	want := Person{
@@ -118,7 +121,8 @@ func TestGetItemExpressionAttributeNames(t *testing.T) {
 	ddb := mock(t)
 	client := dynago.New(ddb)
 	type Person struct {
-		Name string `idx:"primary" attr:"PK" fmt:"Person#{}"`
+		*CompositeTable
+		Name string `attr:"PK" fmt:"Person#{}"`
 		Age  int64
 	}
 	want := Person{
@@ -155,7 +159,8 @@ func TestGetItemCopy(t *testing.T) {
 	ddb := mock(t)
 	client := dynago.New(ddb)
 	type Person struct {
-		Name string `idx:"primary" attr:"PK" fmt:"Person#{}" copyidx:"SK" copy:"SK"`
+		*CompositeTable
+		Name string `attr:"PK" fmt:"Person#{}" copy:"SK"`
 		Age  int64
 	}
 	want := Person{
@@ -191,7 +196,8 @@ func TestGetItemCopyIdx(t *testing.T) {
 	ddb := mock(t)
 	client := dynago.New(ddb)
 	type Person struct {
-		ID   string `idx:"primary" attr:"PK" fmt:"Person#{}" copyidx:"SK" copy:"GSISK"`
+		*CompositeTable
+		ID   string `attr:"PK" fmt:"Person#{}" copy:"GSISK"`
 		Name string `attr:"SK" fmt:"Name#{}" copy:"GSIPK"`
 		Age  int64
 	}
@@ -231,7 +237,8 @@ func TestGetItemDefaultTableName(t *testing.T) {
 	tableName := "bar"
 	client := dynago.New(ddb, &dynago.Config{DefaultTableName: tableName})
 	type Person struct {
-		Name string `idx:"primary" attr:"PK" fmt:"Person#{}"`
+		*CompositeTable
+		Name string `attr:"PK" fmt:"Person#{}"`
 		Age  int64
 	}
 	want := Person{
@@ -264,7 +271,8 @@ func TestGetItemWithMultilineField(t *testing.T) {
 	ddb := mock(t)
 	client := dynago.New(ddb)
 	type Person struct {
-		Name string `idx:"primary" attr:"PK" fmt:"Person#{}" copyidx:"SK" copy:"SK"`
+		*CompositeTable
+		Name string `attr:"PK" fmt:"Person#{}" copy:"SK"`
 		Text string
 	}
 	text := "foo\nbar"
@@ -301,7 +309,8 @@ func TestGetItemDuration(t *testing.T) {
 	ddb := mock(t)
 	client := dynago.New(ddb)
 	type Person struct {
-		Name string `idx:"primary" attr:"PK" fmt:"Person#{}"`
+		*CompositeTable
+		Name string `attr:"PK" fmt:"Person#{}"`
 		Age  time.Duration
 	}
 	want := Person{

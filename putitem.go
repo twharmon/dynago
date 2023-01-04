@@ -10,14 +10,14 @@ import (
 
 // PutItem represents a PutItem operation.
 type PutItem struct {
-	item   interface{}
+	item   Keyer
 	input  *dynamodb.PutItemInput
 	dynago *Dynago
 	err    error
 }
 
 // PutItem returns a PutItem operation.
-func (d *Dynago) PutItem(item interface{}) *PutItem {
+func (d *Dynago) PutItem(item Keyer) *PutItem {
 	return &PutItem{
 		input:  &dynamodb.PutItemInput{TableName: &d.config.DefaultTableName},
 		dynago: d,

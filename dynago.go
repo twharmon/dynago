@@ -150,36 +150,6 @@ func (d *Dynago) Marshal(v interface{}) (map[string]*dynamodb.AttributeValue, er
 	return m, nil
 }
 
-/*
-
-type DefaultTable struct {
-
-}
-
-func (m *DefaultTable) Table() string {
-	return "my-default-table"
-}
-
-func (m *DefaultTable) PrimaryKeys() []string {
-	return []string{"PK", "SK"}
-}
-
-type User struct {
-	*DefaultTable
-	ID string `attr:"PK" copy:"SK" fmt:"User#{}"`
-}
-
-
-func (u *User) Table() string {
-	return "my-table-name"
-}
-
-func (u *User) PrimaryKeys() (string, string) {
-	return "PK", "SK"
-}
-
-*/
-
 func (d *Dynago) key(v Keyer) (map[string]*dynamodb.AttributeValue, error) {
 	m := make(map[string]*dynamodb.AttributeValue)
 	ty, val := tyVal(v)

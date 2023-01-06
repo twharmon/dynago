@@ -30,7 +30,8 @@ type Keyer interface {
 	PrimaryKeys() []string
 }
 
-// Dynago is
+// Dynago provides the API operation methods for making requests to
+// Amazon DynamoDB. Dynago methods are safe to use concurrently.
 type Dynago struct {
 	config   *Config
 	cache    map[string]map[int]*field

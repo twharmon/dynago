@@ -16,7 +16,7 @@ type UpdateItem struct {
 	err    error
 }
 
-// UpdateItem retusn an UpdateItem operation.
+// UpdateItem returns an UpdateItem operation.
 func (d *Dynago) UpdateItem(item Keyer) *UpdateItem {
 	return &UpdateItem{
 		input:  &dynamodb.UpdateItemInput{TableName: &d.config.DefaultTableName},

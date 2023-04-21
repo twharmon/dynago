@@ -12,7 +12,6 @@ import (
 )
 
 var timeType = reflect.TypeOf(time.Now())
-var durationType = reflect.TypeOf(time.Second)
 var fmtRegExp = regexp.MustCompile(`\{([A-Z]?[a-zA-Z0-9_]*)\}`)
 
 type field struct {
@@ -41,7 +40,7 @@ func (d *Dynago) field(sf reflect.StructField, index int) (*field, error) {
 		return &f, nil
 	}
 	ty := sf.Type
-	for ty.Kind() == reflect.Ptr {
+	for ty.Kind() == reflect.Pointer {
 		ty = ty.Elem()
 	}
 	kind := ty.Kind()
@@ -93,7 +92,7 @@ func (d *Dynago) field(sf reflect.StructField, index int) (*field, error) {
 			}
 		case reflect.Slice:
 			elTy := ty.Elem()
-			for elTy.Kind() == reflect.Ptr {
+			for elTy.Kind() == reflect.Pointer {
 				elTy = elTy.Elem()
 			}
 			switch elTy {
@@ -117,38 +116,25 @@ func (f *field) format(v reflect.Value, fieldIndex int) *string {
 		} else {
 			fval = v.FieldByName(trimDelims(match))
 		}
-		for fval.Kind() == reflect.Ptr {
+		for fval.Kind() == reflect.Pointer {
 			fval = fval.Elem()
 		}
-		switch val := fval.Interface().(type) {
-		case string:
-			output = strings.ReplaceAll(output, match, val)
-		case int:
-			output = strings.ReplaceAll(output, match, strconv.FormatInt(int64(val), 10))
-		case uint:
-			output = strings.ReplaceAll(output, match, strconv.FormatInt(int64(val), 10))
-		case int8:
-			output = strings.ReplaceAll(output, match, strconv.FormatInt(int64(val), 10))
-		case uint8:
-			output = strings.ReplaceAll(output, match, strconv.FormatInt(int64(val), 10))
-		case int16:
-			output = strings.ReplaceAll(output, match, strconv.FormatInt(int64(val), 10))
-		case uint16:
-			output = strings.ReplaceAll(output, match, strconv.FormatInt(int64(val), 10))
-		case int32:
-			output = strings.ReplaceAll(output, match, strconv.FormatInt(int64(val), 10))
-		case uint32:
-			output = strings.ReplaceAll(output, match, strconv.FormatInt(int64(val), 10))
-		case int64:
-			output = strings.ReplaceAll(output, match, strconv.FormatInt(val, 10))
-		case uint64:
-			output = strings.ReplaceAll(output, match, strconv.FormatInt(int64(val), 10))
-		case float32:
-			output = strings.ReplaceAll(output, match, strconv.FormatFloat(float64(val), 'f', -1, 32))
-		case float64:
-			output = strings.ReplaceAll(output, match, strconv.FormatFloat(val, 'f', -1, 64))
-		case time.Time:
-			output = strings.ReplaceAll(output, match, val.Format(f.layout))
+		switch fval.Kind() {
+		case reflect.String:
+			output = strings.ReplaceAll(output, match, fval.String())
+		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+			output = strings.ReplaceAll(output, match, strconv.FormatInt(fval.Int(), 10))
+		case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+			output = strings.ReplaceAll(output, match, strconv.FormatUint(fval.Uint(), 10))
+		case reflect.Float32:
+			output = strings.ReplaceAll(output, match, strconv.FormatFloat(fval.Float(), 'f', -1, 32))
+		case reflect.Float64:
+			output = strings.ReplaceAll(output, match, strconv.FormatFloat(fval.Float(), 'f', -1, 64))
+		case reflect.Struct:
+			switch val := fval.Interface().(type) {
+			case time.Time:
+				output = strings.ReplaceAll(output, match, val.Format(f.layout))
+			}
 		}
 	}
 	return &output
@@ -168,85 +154,31 @@ func (f *field) parse(s string, v reflect.Value) error {
 		} else {
 			fval = v.FieldByName(fname)
 		}
-		for fval.Kind() == reflect.Ptr {
+		for fval.Kind() == reflect.Pointer {
 			fval = fval.Elem()
 		}
 		fty := fval.Type()
 		switch fty.Kind() {
 		case reflect.String:
-			fval.Set(reflect.ValueOf(str))
-		case reflect.Int:
-			val, err := strconv.ParseInt(str, 10, 64)
+			fval.SetString(str)
+		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+			val, err := strconv.ParseInt(str, 10, fval.Type().Bits())
 			if err != nil {
 				return err
 			}
-			fval.Set(reflect.ValueOf(int(val)))
-		case reflect.Uint:
-			val, err := strconv.ParseInt(str, 10, 64)
+			fval.SetInt(val)
+		case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+			val, err := strconv.ParseUint(str, 10, fval.Type().Bits())
 			if err != nil {
 				return err
 			}
-			fval.Set(reflect.ValueOf(uint(val)))
-		case reflect.Int8:
-			val, err := strconv.ParseInt(str, 10, 64)
+			fval.SetUint(val)
+		case reflect.Float32, reflect.Float64:
+			val, err := strconv.ParseFloat(str, fval.Type().Bits())
 			if err != nil {
 				return err
 			}
-			fval.Set(reflect.ValueOf(int8(val)))
-		case reflect.Uint8:
-			val, err := strconv.ParseInt(str, 10, 64)
-			if err != nil {
-				return err
-			}
-			fval.Set(reflect.ValueOf(uint8(val)))
-		case reflect.Int16:
-			val, err := strconv.ParseInt(str, 10, 64)
-			if err != nil {
-				return err
-			}
-			fval.Set(reflect.ValueOf(int16(val)))
-		case reflect.Uint16:
-			val, err := strconv.ParseInt(str, 10, 64)
-			if err != nil {
-				return err
-			}
-			fval.Set(reflect.ValueOf(uint16(val)))
-		case reflect.Int32:
-			val, err := strconv.ParseInt(str, 10, 64)
-			if err != nil {
-				return err
-			}
-			fval.Set(reflect.ValueOf(int32(val)))
-		case reflect.Uint32:
-			val, err := strconv.ParseInt(str, 10, 64)
-			if err != nil {
-				return err
-			}
-			fval.Set(reflect.ValueOf(uint32(val)))
-		case reflect.Int64:
-			val, err := strconv.ParseInt(str, 10, 64)
-			if err != nil {
-				return err
-			}
-			fval.Set(reflect.ValueOf(val))
-		case reflect.Uint64:
-			val, err := strconv.ParseInt(str, 10, 64)
-			if err != nil {
-				return err
-			}
-			fval.Set(reflect.ValueOf(uint64(val)))
-		case reflect.Float32:
-			val, err := strconv.ParseFloat(str, 32)
-			if err != nil {
-				return err
-			}
-			fval.Set(reflect.ValueOf(float32(val)))
-		case reflect.Float64:
-			val, err := strconv.ParseFloat(str, 64)
-			if err != nil {
-				return err
-			}
-			fval.Set(reflect.ValueOf(val))
+			fval.SetFloat(val)
 		case reflect.Struct:
 			switch fty {
 			case timeType:
@@ -263,7 +195,7 @@ func (f *field) parse(s string, v reflect.Value) error {
 
 func (f *field) attrVal(v reflect.Value) (*dynamodb.AttributeValue, error) {
 	fv := v.Field(f.index)
-	for fv.Kind() == reflect.Ptr {
+	for fv.Kind() == reflect.Pointer {
 		fv = fv.Elem()
 	}
 	switch f.attrType {
@@ -272,8 +204,9 @@ func (f *field) attrVal(v reflect.Value) (*dynamodb.AttributeValue, error) {
 	case "SS":
 		av := &dynamodb.AttributeValue{}
 		ss := fv.Interface().([]string)
+		av.SS = make([]*string, len(ss))
 		for i := range ss {
-			av.SS = append(av.SS, &ss[i])
+			av.SS[i] = &ss[i]
 		}
 		return av, nil
 	}
@@ -282,7 +215,7 @@ func (f *field) attrVal(v reflect.Value) (*dynamodb.AttributeValue, error) {
 
 func (f *field) unmarshal(item map[string]*dynamodb.AttributeValue, v reflect.Value) error {
 	fv := v.Field(f.index)
-	for fv.Kind() == reflect.Ptr {
+	for fv.Kind() == reflect.Pointer {
 		if fv.IsNil() {
 			fv.Set(reflect.New(fv.Type().Elem()))
 		}
@@ -298,9 +231,9 @@ func (f *field) unmarshal(item map[string]*dynamodb.AttributeValue, v reflect.Va
 	case "SS":
 		if item[f.attrName] != nil && item[f.attrName].SS != nil {
 			ssptr := item[f.attrName].SS
-			var ss []string
+			ss := make([]string, len(ssptr))
 			for i := range ssptr {
-				ss = append(ss, *ssptr[i])
+				ss[i] = *ssptr[i]
 			}
 			fv.Set(reflect.ValueOf(ss))
 		}

@@ -237,6 +237,26 @@ func TestMarshalStruct(t *testing.T) {
 	assertEq(t, want, got)
 }
 
+func TestMarshalStructTypeAlias(t *testing.T) {
+	type S string
+	type Person struct {
+		*CompositeTable
+		Name S
+	}
+	p := Person{
+		Name: "foo",
+	}
+	want := map[string]*dynamodb.AttributeValue{
+		"Name": {S: aws.String(string(p.Name))},
+	}
+	client := dynago.New(nil)
+	got, err := client.Marshal(&p)
+	if err != nil {
+		t.Fatalf("unexpected err: %s", err)
+	}
+	assertEq(t, want, got)
+}
+
 func TestUnmarshalStruct(t *testing.T) {
 	type Pet struct {
 		Type string

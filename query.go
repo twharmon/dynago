@@ -121,10 +121,10 @@ func (q *Query) Exec() error {
 		return q.err
 	}
 	rv := reflect.ValueOf(q.items)
-	if rv.Kind() != reflect.Ptr {
+	if rv.Kind() != reflect.Pointer {
 		return errors.New("dynago: dynago.Query.Exec: v must be pointer")
 	}
-	for rv.Kind() == reflect.Ptr {
+	for rv.Kind() == reflect.Pointer {
 		rv = reflect.Indirect(rv)
 	}
 	var err error
@@ -133,16 +133,16 @@ func (q *Query) Exec() error {
 		return fmt.Errorf("d.ddb.Query: %w", err)
 	}
 	rt := reflect.TypeOf(q.items)
-	for rt.Kind() == reflect.Ptr {
+	for rt.Kind() == reflect.Pointer {
 		rt = rt.Elem()
 	}
 	ft := rt.Elem()
 	indirect := true
-	if ft.Kind() == reflect.Ptr {
+	if ft.Kind() == reflect.Pointer {
 		ft = ft.Elem()
 		indirect = false
 	}
-	if ft.Kind() == reflect.Ptr {
+	if ft.Kind() == reflect.Pointer {
 		return errors.New("dynago: dynago.Query.Exec: elements of v can not be pointers to pointers")
 	}
 	s := reflect.MakeSlice(rt, len(output.Items), len(output.Items))

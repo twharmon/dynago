@@ -12,15 +12,11 @@ import (
 )
 
 func tyVal(v interface{}) (reflect.Type, reflect.Value) {
-	ty := reflect.TypeOf(v)
-	for ty.Kind() == reflect.Ptr {
-		ty = ty.Elem()
-	}
 	val := reflect.ValueOf(v)
-	for val.Kind() == reflect.Ptr {
+	for val.Kind() == reflect.Pointer {
 		val = val.Elem()
 	}
-	return ty, val
+	return val.Type(), val
 }
 
 func trimDelims(s string) string {
@@ -31,7 +27,7 @@ func (d *Dynago) simpleUnmarshal(v reflect.Value, av *dynamodb.AttributeValue, l
 	if av == nil {
 		return nil
 	}
-	for v.Kind() == reflect.Ptr {
+	for v.Kind() == reflect.Pointer {
 		if v.IsNil() {
 			v.Set(reflect.New(v.Type().Elem()))
 		}
@@ -66,111 +62,35 @@ func (d *Dynago) simpleUnmarshal(v reflect.Value, av *dynamodb.AttributeValue, l
 		}
 	case reflect.String:
 		if av.S != nil {
-			v.Set(reflect.ValueOf(*av.S))
+			v.SetString(*av.S)
 		}
-	case reflect.Int:
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 		if av.N != nil {
-			i, err := strconv.ParseInt(*av.N, 10, 64)
+			i, err := strconv.ParseInt(*av.N, 10, v.Type().Bits())
 			if err != nil {
 				return err
 			}
-			v.Set(reflect.ValueOf(int(i)))
+			v.SetInt(i)
 		}
-	case reflect.Uint:
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
 		if av.N != nil {
-			i, err := strconv.ParseInt(*av.N, 10, 64)
+			i, err := strconv.ParseUint(*av.N, 10, v.Type().Bits())
 			if err != nil {
 				return err
 			}
-			v.Set(reflect.ValueOf(uint(i)))
+			v.SetUint(i)
 		}
-	case reflect.Int8:
+	case reflect.Float32, reflect.Float64:
 		if av.N != nil {
-			i, err := strconv.ParseInt(*av.N, 10, 64)
+			i, err := strconv.ParseFloat(*av.N, v.Type().Bits())
 			if err != nil {
 				return err
 			}
-			v.Set(reflect.ValueOf(int8(i)))
-		}
-	case reflect.Int16:
-		if av.N != nil {
-			i, err := strconv.ParseInt(*av.N, 10, 64)
-			if err != nil {
-				return err
-			}
-			v.Set(reflect.ValueOf(int16(i)))
-		}
-	case reflect.Int32:
-		if av.N != nil {
-			i, err := strconv.ParseInt(*av.N, 10, 64)
-			if err != nil {
-				return err
-			}
-			v.Set(reflect.ValueOf(int32(i)))
-		}
-	case reflect.Int64:
-		if av.N != nil {
-			i, err := strconv.ParseInt(*av.N, 10, 64)
-			if err != nil {
-				return err
-			}
-			if v.Type() == durationType {
-				v.Set(reflect.ValueOf(time.Duration(i)))
-			} else {
-				v.Set(reflect.ValueOf(i))
-			}
-		}
-	case reflect.Uint8:
-		if av.N != nil {
-			i, err := strconv.ParseInt(*av.N, 10, 64)
-			if err != nil {
-				return err
-			}
-			v.Set(reflect.ValueOf(uint8(i)))
-		}
-	case reflect.Uint16:
-		if av.N != nil {
-			i, err := strconv.ParseInt(*av.N, 10, 64)
-			if err != nil {
-				return err
-			}
-			v.Set(reflect.ValueOf(uint16(i)))
-		}
-	case reflect.Uint32:
-		if av.N != nil {
-			i, err := strconv.ParseInt(*av.N, 10, 64)
-			if err != nil {
-				return err
-			}
-			v.Set(reflect.ValueOf(uint32(i)))
-		}
-	case reflect.Uint64:
-		if av.N != nil {
-			i, err := strconv.ParseInt(*av.N, 10, 64)
-			if err != nil {
-				return err
-			}
-			v.Set(reflect.ValueOf(uint64(i)))
-		}
-	case reflect.Float64:
-		if av.N != nil {
-			i, err := strconv.ParseFloat(*av.N, 64)
-			if err != nil {
-				return err
-			}
-			v.Set(reflect.ValueOf(i))
-		}
-	case reflect.Float32:
-		if av.N != nil {
-			i, err := strconv.ParseFloat(*av.N, 32)
-			if err != nil {
-				return err
-			}
-			v.Set(reflect.ValueOf(float32(i)))
+			v.SetFloat(i)
 		}
 	case reflect.Bool:
 		if av.BOOL != nil {
-			v.Set(reflect.ValueOf(*av.BOOL))
+			v.SetBool(*av.BOOL)
 		}
 	case reflect.Map:
 		if av.M != nil {
@@ -183,7 +103,7 @@ func (d *Dynago) simpleUnmarshal(v reflect.Value, av *dynamodb.AttributeValue, l
 }
 
 func (d *Dynago) simpleMarshal(v reflect.Value, layout string) (*dynamodb.AttributeValue, error) {
-	for v.Kind() == reflect.Ptr {
+	for v.Kind() == reflect.Pointer {
 		v = v.Elem()
 	}
 	switch v.Kind() {
@@ -214,63 +134,19 @@ func (d *Dynago) simpleMarshal(v reflect.Value, layout string) (*dynamodb.Attrib
 		}
 		return &dynamodb.AttributeValue{M: item}, nil
 	case reflect.String:
-		val := v.Interface().(string)
+		val := v.String()
 		return &dynamodb.AttributeValue{S: &val}, nil
-	case reflect.Int:
-		val := v.Interface().(int)
-		s := strconv.FormatInt(int64(val), 10)
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		s := strconv.FormatInt(v.Int(), 10)
 		return &dynamodb.AttributeValue{N: &s}, nil
-	case reflect.Uint:
-		val := v.Interface().(uint)
-		s := strconv.FormatInt(int64(val), 10)
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+		s := strconv.FormatUint(v.Uint(), 10)
 		return &dynamodb.AttributeValue{N: &s}, nil
-	case reflect.Int8:
-		val := v.Interface().(int8)
-		s := strconv.FormatInt(int64(val), 10)
-		return &dynamodb.AttributeValue{N: &s}, nil
-	case reflect.Int16:
-		val := v.Interface().(int16)
-		s := strconv.FormatInt(int64(val), 10)
-		return &dynamodb.AttributeValue{N: &s}, nil
-	case reflect.Int32:
-		val := v.Interface().(int32)
-		s := strconv.FormatInt(int64(val), 10)
-		return &dynamodb.AttributeValue{N: &s}, nil
-	case reflect.Int64:
-		if v.Type() == durationType {
-			val := v.Interface().(time.Duration)
-			s := strconv.FormatInt(int64(val), 10)
-			return &dynamodb.AttributeValue{N: &s}, nil
-		}
-		val := v.Interface().(int64)
-		s := strconv.FormatInt(val, 10)
-		return &dynamodb.AttributeValue{N: &s}, nil
-	case reflect.Uint8:
-		val := v.Interface().(uint8)
-		s := strconv.FormatInt(int64(val), 10)
-		return &dynamodb.AttributeValue{N: &s}, nil
-	case reflect.Uint16:
-		val := v.Interface().(uint16)
-		s := strconv.FormatInt(int64(val), 10)
-		return &dynamodb.AttributeValue{N: &s}, nil
-	case reflect.Uint32:
-		val := v.Interface().(uint32)
-		s := strconv.FormatInt(int64(val), 10)
-		return &dynamodb.AttributeValue{N: &s}, nil
-	case reflect.Uint64:
-		val := v.Interface().(uint64)
-		s := strconv.FormatInt(int64(val), 10)
-		return &dynamodb.AttributeValue{N: &s}, nil
-	case reflect.Float64:
-		val := v.Interface().(float64)
-		s := formatFloat(val)
-		return &dynamodb.AttributeValue{N: &s}, nil
-	case reflect.Float32:
-		val := v.Interface().(float32)
-		s := formatFloat(val)
+	case reflect.Float32, reflect.Float64:
+		s := strconv.FormatFloat(v.Float(), 'f', -1, v.Type().Bits())
 		return &dynamodb.AttributeValue{N: &s}, nil
 	case reflect.Bool:
-		val := v.Interface().(bool)
+		val := v.Bool()
 		return &dynamodb.AttributeValue{BOOL: &val}, nil
 	case reflect.Map:
 		av, err := dynamodbattribute.MarshalMap(v.Interface())
@@ -282,15 +158,4 @@ func (d *Dynago) simpleMarshal(v reflect.Value, layout string) (*dynamodb.Attrib
 
 type Float interface {
 	float32 | float64
-}
-
-func formatFloat[T Float](f T) string {
-	var s string
-	switch val := interface{}(f).(type) {
-	case float32:
-		s = strconv.FormatFloat(float64(val), 'f', -1, 32)
-	case float64:
-		s = strconv.FormatFloat(val, 'f', -1, 64)
-	}
-	return s
 }

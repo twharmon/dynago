@@ -14,9 +14,13 @@ func assertEq(t *testing.T, want, got interface{}) {
 	}
 }
 
+type Fatalfer interface {
+	Fatalf(format string, args ...any)
+}
+
 type ddbMock struct {
 	dynamodbiface.DynamoDBAPI
-	t               *testing.T
+	t               Fatalfer
 	getItemInput    *dynamodb.GetItemInput
 	getItemOutput   *dynamodb.GetItemOutput
 	queryInput      *dynamodb.QueryInput
@@ -119,7 +123,7 @@ func (m *ddbMock) MockDelete(i *dynamodb.DeleteItemInput) {
 	m.deleteItemInput = i
 }
 
-func mock(t *testing.T) *ddbMock {
+func mock(t Fatalfer) *ddbMock {
 	m := ddbMock{t: t}
 	return &m
 }

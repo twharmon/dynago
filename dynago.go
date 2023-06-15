@@ -14,17 +14,19 @@ import (
 // dynago.Dynago service client's API operations. This make unit
 // testing your code easier.
 type DynagoAPI interface {
-	DeleteItem(interface{}) *DeleteItem
-	PutItem(interface{}) *PutItem
-	GetItem(interface{}) *GetItem
+	DeleteItem(Keyer) *DeleteItem
+	PutItem(Keyer) *PutItem
+	GetItem(Keyer) *GetItem
 	Query(interface{}) *Query
 	Scan(interface{}) *Scan
-	UpdateItem(interface{}) *UpdateItem
-	ConditionCheck(interface{}) *ConditionCheck
+	UpdateItem(Keyer) *UpdateItem
+	ConditionCheck(Keyer) *ConditionCheck
 	TransactionWriteItems() *TransactionWriteItems
 	Marshal(interface{}) (map[string]*dynamodb.AttributeValue, error)
 	Unmarshal(map[string]*dynamodb.AttributeValue, interface{}) error
 }
+
+var _ DynagoAPI = (*Dynago)(nil)
 
 type Keyer interface {
 	PrimaryKeys() []string

@@ -141,7 +141,7 @@ func additionalAttrs(item map[string]*dynamodb.AttributeValue, v reflect.Value) 
 	// Add additional attributes for specific types
 	switch val := v.Interface().(type) {
 	case Author:
-		// Add a fat partition on sparse global secondary index to
+		// Add a fat partition or sparse global secondary index to
 		// make querying for all authors possible
 		author := fmt.Sprintf("Author#%s", val.ID)
 		item["GSIPK"] = &dynamodb.AttributeValue{S: &ty}

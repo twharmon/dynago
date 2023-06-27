@@ -160,7 +160,8 @@ func (d *Dynago) key(v Keyer) (map[string]*dynamodb.AttributeValue, error) {
 	if err != nil {
 		return nil, fmt.Errorf("d.cachedStruct: %w", err)
 	}
-	for _, primKey := range v.PrimaryKeys() {
+	primKeys := v.PrimaryKeys()
+	for _, primKey := range primKeys {
 		for i := 0; i < ty.NumField(); i++ {
 			if cache[i].attrName == primKey || slices.Contains(cache[i].attrsToCopy, primKey) {
 				av, err := cache[i].attrVal(val)
@@ -168,6 +169,21 @@ func (d *Dynago) key(v Keyer) (map[string]*dynamodb.AttributeValue, error) {
 					return nil, fmt.Errorf("cache.attrVal: %w", err)
 				}
 				m[primKey] = av
+			}
+		}
+	}
+	if d.config.AdditionalAttrs != nil {
+		d.config.AdditionalAttrs(m, val)
+		for k := range m {
+			isKey := false
+			for _, pk := range primKeys {
+				if pk == k {
+					isKey = true
+					break
+				}
+			}
+			if !isKey {
+				delete(m, k)
 			}
 		}
 	}

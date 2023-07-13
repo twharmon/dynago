@@ -109,7 +109,7 @@ func (d *Dynago) simpleMarshal(v reflect.Value, layout string) (*dynamodb.Attrib
 	switch v.Kind() {
 	case reflect.Slice:
 		if v.Type().Elem().Kind() == reflect.Uint8 {
-			val := v.Interface().([]byte)
+			val := v.Bytes()
 			return &dynamodb.AttributeValue{B: val}, nil
 		}
 		av := &dynamodb.AttributeValue{L: []*dynamodb.AttributeValue{}}

@@ -107,14 +107,30 @@ func (d *Dynago) field(sf reflect.StructField, index int) (*field, error) {
 	return &f, nil
 }
 
-func (f *field) format(v reflect.Value, fieldIndex int) *string {
+func (f *field) format(v reflect.Value) (*string, error) {
 	output := f.fmt
 	for _, match := range fmtRegExp.FindAllString(f.fmt, -1) {
 		var fval reflect.Value
+		var refFieldLayout string
 		if match == "{}" {
-			fval = v.Field(fieldIndex)
+			fval = v.Field(f.index)
+			refFieldLayout = f.layout
 		} else {
-			fval = v.FieldByName(trimDelims(match))
+			cache, err := f.client.cachedStruct(v.Type()) // TODO: do this lazily
+			if err != nil {
+				return nil, err
+			}
+			fname := trimDelims(match)
+			vt := v.Type()
+			for i := 0; i < vt.NumField(); i++ {
+				fld := vt.Field(i)
+				if fld.Name == fname {
+					fval = v.Field(i)
+					ff := cache[i]
+					refFieldLayout = ff.layout
+					break
+				}
+			}
 		}
 		for fval.Kind() == reflect.Pointer {
 			fval = fval.Elem()
@@ -133,26 +149,43 @@ func (f *field) format(v reflect.Value, fieldIndex int) *string {
 		case reflect.Struct:
 			switch val := fval.Interface().(type) {
 			case time.Time:
-				output = strings.ReplaceAll(output, match, val.Format(f.layout))
+				output = strings.ReplaceAll(output, match, val.Format(refFieldLayout))
 			}
 		}
 	}
-	return &output
+	return &output, nil
 }
 
 func (f *field) parse(s string, v reflect.Value) error {
 	for _, match := range fmtRegExp.FindAllString(f.fmt, -1) {
 		fname := trimDelims(match)
+
 		strSubs := f.fmtRegExps[fname].FindStringSubmatch(s)
 		if strSubs == nil {
 			continue
 		}
 		str := strSubs[1]
 		var fval reflect.Value
+		var refFieldLayout string
 		if fname == "" {
 			fval = v.Field(f.index)
+			refFieldLayout = f.layout
 		} else {
 			fval = v.FieldByName(fname)
+			cache, err := f.client.cachedStruct(v.Type()) // TODO: do this lazily
+			if err != nil {
+				return err
+			}
+			vt := v.Type()
+			for i := 0; i < vt.NumField(); i++ {
+				fld := vt.Field(i)
+				if fld.Name == fname {
+					fval = v.Field(i)
+					ff := cache[i]
+					refFieldLayout = ff.layout
+					break
+				}
+			}
 		}
 		for fval.Kind() == reflect.Pointer {
 			fval = fval.Elem()
@@ -182,7 +215,7 @@ func (f *field) parse(s string, v reflect.Value) error {
 		case reflect.Struct:
 			switch fty {
 			case timeType:
-				t, err := time.Parse(f.layout, str)
+				t, err := time.Parse(refFieldLayout, str)
 				if err != nil {
 					return fmt.Errorf("time.Parse: %w", err)
 				}
@@ -200,7 +233,11 @@ func (f *field) attrVal(v reflect.Value) (*dynamodb.AttributeValue, error) {
 	}
 	switch f.attrType {
 	case "S":
-		return &dynamodb.AttributeValue{S: f.format(v, f.index)}, nil
+		s, err := f.format(v)
+		if err != nil {
+			return nil, err
+		}
+		return &dynamodb.AttributeValue{S: s}, nil
 	case "SS":
 		av := &dynamodb.AttributeValue{}
 		ss := fv.Interface().([]string)

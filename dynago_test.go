@@ -144,6 +144,29 @@ func TestUnmarshalStringCompoundFmt(t *testing.T) {
 	assertEq(t, want, got)
 }
 
+func TestMarshalCompoundFmt(t *testing.T) {
+	type UserGame struct {
+		User      string    `attr:"PK" fmt:"User#{}"`
+		Game      string    `attr:"SK" fmt:"Game#{Concluded}#{}"`
+		Concluded time.Time `attr:"-"`
+	}
+	now := time.Now()
+	p := UserGame{
+		User:      "foo",
+		Game:      "bar",
+		Concluded: now,
+	}
+	want := map[string]*dynamodb.AttributeValue{
+		"PK": {S: aws.String(fmt.Sprintf("User#%s", p.User))},
+		"SK": {S: aws.String(fmt.Sprintf("Game#%s#%s", now.Format(time.RFC3339), p.Game))},
+	}
+	client := dynago.New(nil)
+	got, err := client.Marshal(&p)
+	if err != nil {
+		t.Fatalf("unexpected err: %s", err)
+	}
+	assertEq(t, want, got)
+}
 func TestUnmarshalString(t *testing.T) {
 	type Person struct {
 		Name string

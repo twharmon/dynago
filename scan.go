@@ -12,9 +12,15 @@ import (
 // Scan represents a Scan operation.
 type Scan struct {
 	input  *dynamodb.ScanInput
+	output *ScanOutput
 	dynago *Dynago
 	items  interface{}
 	err    error
+}
+
+// ScanOutput represents the output of a scan command.
+type ScanOutput struct {
+	LastEvaluatedKey map[string]*dynamodb.AttributeValue
 }
 
 // Scan returns a Scan operation.
@@ -115,6 +121,11 @@ func (q *Scan) ExpressionAttributeName(name string, sub string) *Scan {
 	return q
 }
 
+func (q *Scan) Output(output *ScanOutput) *Scan {
+	q.output = output
+	return q
+}
+
 // Exec executes the operation.
 func (q *Scan) Exec() error {
 	rv := reflect.ValueOf(q.items)
@@ -128,6 +139,9 @@ func (q *Scan) Exec() error {
 	output, err := q.dynago.ddb.Scan(q.input)
 	if err != nil {
 		return fmt.Errorf("d.ddb.GetItem: %w", err)
+	}
+	if q.output != nil {
+		q.output.LastEvaluatedKey = output.LastEvaluatedKey
 	}
 	rt := reflect.TypeOf(q.items)
 	for rt.Kind() == reflect.Pointer {
